@@ -864,8 +864,7 @@ export default function App() {
       const montantCtx=manuelMontant?parseFloat(manuelMontant).toLocaleString("fr-FR")+"€":"non précisé";
       const prompt = "Tu es conseiller senior Les Associés, spécialiste allocation d'actifs.\n\"\n        +\"Portefeuille MANUEL défini par le conseiller :\n\"+perfCtx+\"\n\n\"\n        +\"SRI moyen : \"+sriMoyen+\" | Marchés : \"+marchesCtx+\" | Montant : \"+montantCtx+\"\n\n\"\n        +\"Analyse ce portefeuille comme un expert. Pour chaque fonds, justifie sa pertinence aujourd'hui \"\n        +\"(contexte macro précis : taux, spreads, valorisation sectorielle, flux). \"\n        +\"Identifie si la performance est structurelle ou conjoncturelle.\n\n\"\n        +\"Réponds en JSON strict sans markdown :\n\"\n        +'{\"synthese\":\"3 phrases : contexte marché actuel + cohérence du portefeuille + forces\",\"fonds\":[{\"isin\":\"...\",\"role\":\"1 phrase\",\"pourquoi\":\"2 phrases sur pertinence actuelle\",\"vigilance\":\"1 point de risque concret\"}]}';\n      const txt = await callClaude(prompt);\n      const clean = txt.replace(/```json|```/g,\"\").trim();\n      setManuelAi(JSON.parse(clean.slice(clean.indexOf(\"{\"),clean.lastIndexOf(\"}\")+1)));\n    } catch(e) { setManuelAi({error:true,msg:e.message}); }\n    setManuelAiLoading(false);\n  }\n\n  function openHtmlInNewTab(html) {\n    // Méthode 1 : Blob URL (contourne les popup blockers)\n    try {\n      var blob = new Blob([html], {type:\"text/html;charset=utf-8\"});\n      var url = URL.createObjectURL(blob);\n      var a = document.createElement(\"a\");\n      a.href = url;\n      a.target = \"_blank";
       a.download = "allocation-les-associes-" + new Date().toISOString().slice(0,10) + ".html";
-      document.body.appendChild(a);
-      a.click();
+      document.body.appendChild(a);      a.click();
       setTimeout(function(){document.body.removeChild(a);URL.revokeObjectURL(url);}, 1000);
       return true;
     } catch(e) { return false; }
@@ -1823,16 +1822,8 @@ export default function App() {
 
                 {/* Tableau performances annuelles */}
                 <div style={{...card,padding:24}} className="fu4">
-                  <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4,flexWrap:"wrap",gap:8}}>
-                    <div style={{fontSize:13,fontWeight:700,color:C.navy}}>📊 Performances annuelles par fonds</div>
-                    {fmpStats
-                      ? <span style={{fontSize:11,padding:"3px 10px",borderRadius:10,background:C.greenBg,color:C.green,fontWeight:600}}>✅ {fmpStats.real} fonds avec données réelles FMP</span>
-                      : <span style={{fontSize:11,padding:"3px 10px",borderRadius:10,background:C.goldXL,color:C.goldDim,fontWeight:600}}>⚠ Simulations — chargez les données FMP dans l'onglet Fonds</span>
-                    }
-                  </div>
-                  <div style={{fontSize:11,color:C.textDim,marginBottom:16}}>
-                    {fmpStats ? "Données réelles FMP (ISIN reconnus) · fallback simulé si non trouvé" : "Simulations indicatives · base profil SRI"}
-                  </div>
+                  <div style={{fontSize:13,fontWeight:700,color:C.navy,marginBottom:4}}>📊 Performances annuelles par fonds</div>
+                  <div style={{fontSize:11,color:C.textDim,marginBottom:16}}>Simulations indicatives · base profil SRI</div>
                   <div style={{overflowX:"auto"}}>
                     {(()=>{
                       const yr=new Date().getFullYear();
@@ -1853,7 +1844,6 @@ export default function App() {
                           <tbody>
                             {results.alloc.map((f,fi)=>{
                               const pts=getFondPerf(f);
-                              const isReal=isFondReal(f);
                               const ann=yrs.map((_,i)=>((pts[i+1]/pts[i])-1)*100);
                               const tot=((pts[10]/pts[0])-1)*100;
                               const col=PALETTE[fi%PALETTE.length];
@@ -1864,10 +1854,7 @@ export default function App() {
                                       <div style={{width:10,height:10,borderRadius:3,background:col,flexShrink:0}}/>
                                       <div>
                                         <div style={{fontWeight:700,color:C.navy,fontSize:12,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",maxWidth:150}}>{f.nom}</div>
-                                        <div style={{display:"flex",gap:4,alignItems:"center",marginTop:2}}>
-                                          <span style={{fontSize:10,color:C.textDim}}>{f.pct}% · SRI {f.sri}</span>
-                                          <span style={{fontSize:9,padding:"1px 5px",borderRadius:4,background:isReal?C.greenBg:C.goldXL,color:isReal?C.green:C.goldDim,fontWeight:700}}>{isReal?"Réel":"Simulé"}</span>
-                                        </div>
+                                        <div style={{fontSize:10,color:C.textDim}}>{f.pct}% · SRI {f.sri}</div>
                                       </div>
                                     </div>
                                   </td>
