@@ -875,15 +875,14 @@ export default function App() {
         const tot=((p[10]/p[0])-1)*100;
         const best=Math.max(...ann).toFixed(1);
         const worst=Math.min(...ann).toFixed(1);
-        return '- '+f.fund.nom+' | SRI'+f.fund.sri+' | '+(f.fund.marche||'—')+' | '+f.pct+'% | perf10ans:'+tot.toFixed(1)+'% | meilleure:+'+best+'% | pire:'+worst+'% | ISIN:'+(f.fund.isin||'—');
-      }).join('
-');
-      const marchesCtx=[...new Set(alloc.map(f=>f.fund.marche).filter(Boolean))].join(', ')||'diversifié';
-      const montantCtx=manuelMontant?parseFloat(manuelMontant).toLocaleString('fr-FR')+'€':'non précisé';
-      const prompt = 'Tu es conseiller senior Les Associés, spécialiste allocation. Portefeuille MANUEL: '+perfCtx+' SRI moyen: '+sriMoyen+' Marchés: '+marchesCtx+' Montant: '+montantCtx+'. Analyse chaque fonds (macro, taux, spreads). Réponds UNIQUEMENT en JSON: {"synthese":"3 phrases","fonds":[{"isin":"...","role":"1 phrase","pourquoi":"2 phrases","vigilance":"1 point"}]}';
+        return "- "+f.fund.nom+" | SRI"+f.fund.sri+" | "+(f.fund.marche||"—")+" | "+f.pct+"% | perf10ans:"+tot.toFixed(1)+"% | meilleure:+"+best+"% | pire:"+worst+"% | ISIN:"+(f.fund.isin||"—");
+      }).join("\n");
+      const marchesCtx=[...new Set(alloc.map(f=>f.fund.marche).filter(Boolean))].join(", ")||"diversifié";
+      const montantCtx=manuelMontant?parseFloat(manuelMontant).toLocaleString("fr-FR")+"€":"non précisé";
+      const prompt = "Tu es conseiller senior Les Associés. Portefeuille MANUEL: "+perfCtx+" SRI moyen: "+sriMoyen+" Marchés: "+marchesCtx+" Montant: "+montantCtx+". Analyse chaque fonds. Réponds UNIQUEMENT en JSON: {\"synthese\":\"3 phrases\",\"fonds\":[{\"isin\":\"...\",\"role\":\"1 phrase\",\"pourquoi\":\"2 phrases\",\"vigilance\":\"1 point\"}]}";
       const txt = await callClaude(prompt);
-      const clean = txt.replace(/```json|```/g,'').trim();
-      setManuelAi(JSON.parse(clean.slice(clean.indexOf('{'),clean.lastIndexOf('}')+1)));
+      const clean = txt.replace(/```json|```/g,"").trim();
+      setManuelAi(JSON.parse(clean.slice(clean.indexOf("{"),clean.lastIndexOf("}")+1)));
     } catch(e) { setManuelAi({error:true,msg:e.message}); }
     setManuelAiLoading(false);
   }
