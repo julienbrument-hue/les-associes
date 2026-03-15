@@ -1823,8 +1823,16 @@ export default function App() {
 
                 {/* Tableau performances annuelles */}
                 <div style={{...card,padding:24}} className="fu4">
-                  <div style={{fontSize:13,fontWeight:700,color:C.navy,marginBottom:4}}>📊 Performances annuelles par fonds</div>
-                  <div style={{fontSize:11,color:C.textDim,marginBottom:16}}>Simulations indicatives · base profil SRI</div>
+                  <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4,flexWrap:"wrap",gap:8}}>
+                    <div style={{fontSize:13,fontWeight:700,color:C.navy}}>📊 Performances annuelles par fonds</div>
+                    {fmpStats
+                      ? <span style={{fontSize:11,padding:"3px 10px",borderRadius:10,background:C.greenBg,color:C.green,fontWeight:600}}>✅ {fmpStats.real} fonds avec données réelles FMP</span>
+                      : <span style={{fontSize:11,padding:"3px 10px",borderRadius:10,background:C.goldXL,color:C.goldDim,fontWeight:600}}>⚠ Simulations — chargez les données FMP dans l'onglet Fonds</span>
+                    }
+                  </div>
+                  <div style={{fontSize:11,color:C.textDim,marginBottom:16}}>
+                    {fmpStats ? "Données réelles FMP (ISIN reconnus) · fallback simulé si non trouvé" : "Simulations indicatives · base profil SRI"}
+                  </div>
                   <div style={{overflowX:"auto"}}>
                     {(()=>{
                       const yr=new Date().getFullYear();
@@ -1845,6 +1853,7 @@ export default function App() {
                           <tbody>
                             {results.alloc.map((f,fi)=>{
                               const pts=getFondPerf(f);
+                              const isReal=isFondReal(f);
                               const ann=yrs.map((_,i)=>((pts[i+1]/pts[i])-1)*100);
                               const tot=((pts[10]/pts[0])-1)*100;
                               const col=PALETTE[fi%PALETTE.length];
@@ -1855,7 +1864,10 @@ export default function App() {
                                       <div style={{width:10,height:10,borderRadius:3,background:col,flexShrink:0}}/>
                                       <div>
                                         <div style={{fontWeight:700,color:C.navy,fontSize:12,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",maxWidth:150}}>{f.nom}</div>
-                                        <div style={{fontSize:10,color:C.textDim}}>{f.pct}% · SRI {f.sri}</div>
+                                        <div style={{display:"flex",gap:4,alignItems:"center",marginTop:2}}>
+                                          <span style={{fontSize:10,color:C.textDim}}>{f.pct}% · SRI {f.sri}</span>
+                                          <span style={{fontSize:9,padding:"1px 5px",borderRadius:4,background:isReal?C.greenBg:C.goldXL,color:isReal?C.green:C.goldDim,fontWeight:700}}>{isReal?"Réel":"Simulé"}</span>
+                                        </div>
                                       </div>
                                     </div>
                                   </td>
