@@ -50,6 +50,51 @@ async function callClaude(prompt) {
   return(d.content&&d.content[0]&&d.content[0].text)||"";
 }
 
+const FMP_KEY="b3k1Mnonse7zBu9lAmph3vYkAFcRHHk4";
+const FMP_BASE="https://financialmodelingprep.com/api/v3";
+const FMP_TTL=24*60*60*1000;
+
+function openHtmlInNewTab(html) {
+  try {
+    var blob=new Blob([html],{type:"text/html;charset=utf-8"});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement("a");
+    a.href=url;
+    a.download="les-associes-"+new Date().toISOString().slice(0,10)+".html";
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function(){document.body.removeChild(a);URL.revokeObjectURL(url);},1000);
+  } catch(e){}
+}
+
+async function fetchFMPPerf(isin) {
+  if(!isin) return null;
+  try {
+    const cached=localStorage.getItem("fmp_"+isin);
+    if(cached){const p=JSON.parse(cached);if(Date.now()-p.ts<FMP_TTL)return p.data;}
+  } catch(e){}
+  try {
+    const endYear=new Date().getFullYear()-1, startYear=endYear-9;
+    const res=await fetch(FMP_BASE+"/historical-price-full/"+encodeURIComponent(isin)+"?from="+startYear+"-01-01&to="+endYear+"-12-31&apikey="+FMP_KEY);
+    if(!res.ok) return null;
+    const json=await res.json();
+    if(!json.historical||json.historical.length<50) return null;
+    const byYear={};
+    json.historical.forEach(function(d){
+      const y=parseInt(d.date.slice(0,4));
+      if(y>=startYear&&y<=endYear&&(!byYear[y]||d.date>byYear[y].date)) byYear[y]={p:d.adjClose||d.close};
+    });
+    const yrs=[];for(var y=startYear;y<=endYear;y++)yrs.push(y);
+    if(yrs.some(function(y){return !byYear[y];})) return null;
+    const base=byYear[startYear].p;
+    if(!base||base<=0) return null;
+    const pts=[100];
+    yrs.forEach(function(y){pts.push(parseFloat((byYear[y].p/base*100).toFixed(2)));});
+    try{localStorage.setItem("fmp_"+isin,JSON.stringify({ts:Date.now(),data:pts}));}catch(e){}
+    return pts;
+  } catch(e){return null;}
+}
+
 function Spinner() {
   return <div className="spin" style={{width:14,height:14,border:"2px solid rgba(15,35,64,0.15)",borderTopColor:GOLD,borderRadius:"50%",display:"inline-block"}}/>;
 }
@@ -369,6 +414,10 @@ export default function App() {
   const [rechFilterSri,setRechFilterSri]=useState(0);
   const [rechFilterMarche,setRechFilterMarche]=useState("");
   const [rechSort,setRechSort]=useState("nom");
+  const [fmpCache,setFmpCache]=useState({});
+  const [fmpLoading,setFmpLoading]=useState(false);
+  const [fmpProgress,setFmpProgress]=useState(0);
+  const [fmpStats,setFmpStats]=useState(null);
   const fileRef=useRef();
 
   const allCompagnies=(function(){const s={};COMPAGNIES.forEach(function(c){s[c]=true;});funds.forEach(function(f){(f.dispo||[]).forEach(function(d){if(d)s[d]=true;});});return Object.keys(s).sort();})();
@@ -389,6 +438,30 @@ export default function App() {
       e.target.value="";
     };
     reader.readAsText(file,"UTF-8");
+  }
+
+  const getFondPerf=function(f){
+    const c=f.isin&&fmpCache[f.isin];
+    return c?c.pts:simPerf(f);
+  };
+  const isFondReal=function(f){return !!(f.isin&&fmpCache[f.isin]&&fmpCache[f.isin].isReal);};
+
+  async function loadFMPData() {
+    if(!funds.length||fmpLoading) return;
+    setFmpLoading(true);setFmpProgress(0);setFmpStats(null);
+    const res={};
+    for(var i=0;i<funds.length;i++){
+      const f=funds[i];
+      if(f.isin){
+        const pts=await fetchFMPPerf(f.isin);
+        res[f.isin]=pts?{pts:pts,isReal:true}:{pts:simPerf(f),isReal:false};
+      } else if(f.id) res[f.id]={pts:simPerf(f),isReal:false};
+      setFmpProgress(Math.round((i+1)/funds.length*100));
+    }
+    setFmpCache(res);
+    const real=Object.values(res).filter(function(r){return r.isReal;}).length;
+    setFmpStats({real:real,simulated:Object.values(res).length-real,total:funds.length});
+    setFmpLoading(false);
   }
 
   function generate() {
@@ -523,48 +596,37 @@ export default function App() {
   const tabs=[{k:"allocation",i:"⚖️",l:"Allocation"},{k:"comparaison",i:"📊",l:"Comparaison"},{k:"actualite",i:"🌍",l:"Actualité"},{k:"fonds",i:"📋",l:"Fonds ("+funds.length+")"},{k:"import",i:"📁",l:"Import CSV"}];
 
   return (
-    <div style={{background:"linear-gradient(160deg,#f8f6f0,#ede8da)",minHeight:"100vh",fontFamily:"system-ui,sans-serif",paddingBottom:48}}>
-      <style>{"@keyframes spin{to{transform:rotate(360deg)}} .spin{animation:spin .7s linear infinite} @keyframes up{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}} .up{animation:up .3s ease}"}</style>
+    <div style={{background:"#f5f3ee",minHeight:"100vh",fontFamily:"system-ui,sans-serif",display:"flex"}}>
+      <style>{"@keyframes spin{to{transform:rotate(360deg)}} .spin{animation:spin .7s linear infinite} @keyframes up{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}} .up{animation:up .3s ease} body::before{content:'';position:fixed;top:0;left:0;width:160px;height:100%;background:linear-gradient(180deg,#0f2340 0%,#1a3560 100%);z-index:0;pointer-events:none}"}</style>
 
-      {/* NAV */}
-      <div style={{background:"linear-gradient(135deg,"+NAV+","+NAVL+")",padding:"22px 28px 16px",boxShadow:"0 4px 32px rgba(15,35,64,0.2)"}}>
-        <div style={{maxWidth:960,margin:"0 auto"}}>
-          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
-            <div style={{display:"flex",alignItems:"center",gap:14}}>
-              <div style={{width:52,height:52,borderRadius:"50%",background:"linear-gradient(135deg,"+NAVL+","+NAV+")",border:"2.5px solid "+GOLD,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 0 0 1.5px #243d6e,0 4px 16px rgba(201,162,39,0.3)"}}>
-                <div style={{width:38,height:38,borderRadius:"50%",background:"linear-gradient(145deg,#e2be5a,#c9a227,#a07d10)",display:"flex",alignItems:"center",justifyContent:"center"}}>
-                  <span style={{fontFamily:"Georgia,serif",fontSize:21,fontWeight:700,color:NAV,fontStyle:"italic"}}>A</span>
-                </div>
-              </div>
-              <div>
-                <div style={{color:"#fff",fontSize:20,fontWeight:700,fontFamily:"Georgia,serif"}}>Les Associés</div>
-                <div style={{color:GOLD,fontSize:10,letterSpacing:2,textTransform:"uppercase",marginTop:2}}>Moteur d'allocation d'actifs</div>
-              </div>
-            </div>
-            <div style={{display:"flex",alignItems:"center",gap:14}}>
-              {results&&results.alloc&&results.alloc.length>0&&(
-                <button onClick={exportPDF} style={{padding:"8px 16px",borderRadius:8,border:"1.5px solid "+GOLD,background:"transparent",color:GOLD,fontWeight:600,fontSize:12,cursor:"pointer",display:"flex",alignItems:"center",gap:6}}>
-                  Exporter PDF
-                </button>
-              )}
-              <div style={{textAlign:"right",fontSize:11,color:"rgba(255,255,255,0.4)"}}>
-                <div>{funds.length} fond{funds.length!==1?"s":""} chargé{funds.length!==1?"s":""}</div>
-                <div>www.les-associes.fr</div>
-              </div>
-            </div>
+      {/* SIDEBAR */}
+      <div style={{width:160,flexShrink:0,background:"linear-gradient(180deg,"+NAV+","+NAVL+")",display:"flex",flexDirection:"column",position:"sticky",top:0,height:"100vh",overflowY:"auto",zIndex:100,boxShadow:"4px 0 20px rgba(15,35,64,0.15)"}}>
+        <div style={{padding:"20px 12px 16px",borderBottom:"1px solid rgba(201,162,39,0.2)",textAlign:"center"}}>
+          <div style={{width:44,height:44,borderRadius:12,background:"rgba(255,255,255,0.07)",border:"1.5px solid rgba(201,162,39,0.45)",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 8px",boxShadow:"0 0 0 3px rgba(201,162,39,0.1)"}}>
+            <span style={{fontFamily:"Georgia,serif",fontSize:22,fontWeight:700,color:GOLD,fontStyle:"italic"}}>A</span>
           </div>
-          <div style={{height:1,background:"linear-gradient(90deg,transparent,rgba(201,162,39,0.5),transparent)",marginBottom:12}}/>
-          <div style={{display:"flex",gap:4}}>
-            {tabs.map(function(t){return (
-              <button key={t.k} onClick={function(){setTab(t.k);}} style={{padding:"8px 18px",borderRadius:20,border:"none",cursor:"pointer",fontSize:13,fontWeight:tab===t.k?700:400,background:tab===t.k?GOLD:"rgba(255,255,255,0.09)",color:tab===t.k?NAV:"rgba(255,255,255,0.65)",transition:"all .15s",display:"flex",alignItems:"center",gap:6}}>
-                <span>{t.i}</span>{t.l}
-              </button>
-            );})}
-          </div>
+          <div style={{fontSize:13,fontWeight:800,color:"#fff",letterSpacing:-.3}}>Les Associés</div>
+          <div style={{fontSize:7,color:"rgba(201,162,39,0.65)",letterSpacing:1.4,textTransform:"uppercase",marginTop:2}}>Moteur d'allocation</div>
+        </div>
+        <nav style={{flex:1,padding:"16px 6px",display:"flex",flexDirection:"column",gap:2}}>
+          <div style={{fontSize:8,color:"rgba(255,255,255,0.28)",fontWeight:700,letterSpacing:1.4,textTransform:"uppercase",marginBottom:8,textAlign:"center"}}>Navigation</div>
+          {tabs.map(function(t){const a=tab===t.k;return(
+            <button key={t.k} onClick={function(){setTab(t.k);}} style={{width:"100%",padding:"10px 8px",borderRadius:9,border:"none",background:a?"rgba(201,162,39,0.15)":"transparent",borderLeft:a?"3px solid "+GOLD:"3px solid transparent",color:a?"#fff":"rgba(255,255,255,0.5)",fontWeight:a?700:400,fontSize:11,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6,fontFamily:"inherit"}}
+            onMouseEnter={function(e){if(!a){e.currentTarget.style.background="rgba(255,255,255,0.06)";e.currentTarget.style.color="rgba(255,255,255,0.8)";}}}
+            onMouseLeave={function(e){if(!a){e.currentTarget.style.background="transparent";e.currentTarget.style.color="rgba(255,255,255,0.5)";}}}
+            >
+              <span style={{fontSize:13,flexShrink:0}}>{t.i}</span>
+              <span style={{whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{t.l}</span>
+            </button>
+          );})}
+        </nav>
+        <div style={{padding:"12px 8px 16px",borderTop:"1px solid rgba(201,162,39,0.14)",textAlign:"center"}}>
+          <div style={{fontSize:10,color:"rgba(255,255,255,0.4)",fontWeight:600}}>{funds.length} fonds</div>
+          <div style={{fontSize:8,color:"rgba(255,255,255,0.22)"}}>v1.0 · Les Associés</div>
         </div>
       </div>
 
-      <div style={{maxWidth:960,margin:"0 auto",padding:"24px 16px"}}>
+      <div style={{flex:1,minWidth:0,padding:"28px 32px 64px",overflowX:"hidden"}}>
 
         {/* ═══ ALLOCATION ═══ */}
         {tab==="allocation"&&(
@@ -650,6 +712,49 @@ export default function App() {
                 <div style={{...gCard,padding:32}}><div style={{fontSize:16,fontWeight:700,color:NAV,marginBottom:20}}>🍩 Répartition</div><Donut funds={results.alloc} sri={sri}/></div>
                 <div style={{...gCard,padding:32}}><div style={{fontSize:16,fontWeight:700,color:NAV,marginBottom:20}}>🧠 Synthèse IA</div>{aiLoading&&!ai&&<div style={{display:"flex",alignItems:"center",gap:10,fontSize:14,color:"#8292a8"}}><div className="spin" style={{width:16,height:16,border:"2px solid #e5e0d0",borderTopColor:GOLD,borderRadius:"50%"}}/>Analyse…</div>}{ai&&ai.synthese&&<p style={{fontSize:15,color:NAV,lineHeight:1.9,margin:0}}>{ai.synthese}</p>}{ai&&ai.error&&<div style={{fontSize:13,color:"#991b1b"}}>Indisponible{ai.msg?" : "+ai.msg:""}</div>}</div>
                 <div style={{...gCard,padding:32}}><div style={{fontSize:16,fontWeight:700,color:NAV,marginBottom:8}}>📈 Performance simulée — 10 ans</div><div style={{fontSize:12,color:"#8292a8",marginBottom:16}}>Base 100 — simulation indicative</div><LineChart funds={results.alloc}/></div>
+                <div style={{...gCard,padding:24}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4,flexWrap:"wrap",gap:8}}>
+                    <div style={{fontSize:14,fontWeight:700,color:NAV}}>📊 Performances annuelles — 5 ans</div>
+                    {fmpStats?<span style={{fontSize:11,padding:"3px 10px",borderRadius:10,background:"#f0fdf4",color:"#166534",fontWeight:600}}>✅ {fmpStats.real} fonds données réelles</span>:<span style={{fontSize:11,padding:"3px 10px",borderRadius:10,background:"#fffbeb",color:"#92400e",fontWeight:600}}>⚠ Simulations — chargez FMP</span>}
+                  </div>
+                  <div style={{overflowX:"auto"}}>
+                    {(function(){
+                      const yr=new Date().getFullYear();
+                      const yrs=[yr-4,yr-3,yr-2,yr-1,yr];
+                      const pc=function(v){return v>=0?"#166534":"#991b1b";};
+                      const pb=function(v){return v>=0?"#f0fdf4":"#fef2f2";};
+                      return(<table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
+                        <thead><tr style={{background:"#f8f6f0"}}>
+                          <th style={{padding:"9px 12px",textAlign:"left",fontWeight:700,color:NAV,borderBottom:"2px solid rgba(201,162,39,0.25)",minWidth:150}}>Fonds</th>
+                          {yrs.map(function(y){return <th key={y} style={{padding:"9px 10px",textAlign:"center",fontWeight:600,color:"#8292a8",borderBottom:"2px solid rgba(201,162,39,0.25)"}}>{y}</th>;})}
+                          <th style={{padding:"9px 10px",textAlign:"center",fontWeight:700,color:GOLD,borderBottom:"2px solid rgba(201,162,39,0.25)"}}>5 ans</th>
+                        </tr></thead>
+                        <tbody>{results.alloc.map(function(f,fi){
+                          const pts=getFondPerf(f);
+                          const isReal=isFondReal(f);
+                          const ann=yrs.map(function(_,i){return((pts[6+i]/pts[5+i])-1)*100;});
+                          const tot=((pts[10]/pts[5])-1)*100;
+                          return(<tr key={f.id} style={{borderBottom:"1px solid rgba(201,162,39,0.08)",background:fi%2===0?"#fff":"#fafaf8"}}>
+                            <td style={{padding:"9px 12px"}}>
+                              <div style={{display:"flex",alignItems:"center",gap:8}}>
+                                <div style={{width:10,height:10,borderRadius:3,background:PIE[fi%PIE.length],flexShrink:0}}/>
+                                <div>
+                                  <div style={{fontWeight:700,color:NAV,fontSize:12,maxWidth:140,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{f.nom}</div>
+                                  <div style={{display:"flex",gap:4,marginTop:2,alignItems:"center"}}>
+                                    <span style={{fontSize:10,color:"#8292a8"}}>{f.pct}% · SRI {f.sri}</span>
+                                    <span style={{fontSize:9,padding:"1px 5px",borderRadius:4,background:isReal?"#f0fdf4":"#fffbeb",color:isReal?"#166534":"#92400e",fontWeight:700}}>{isReal?"Réel":"Simulé"}</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </td>
+                            {ann.map(function(v,i){return <td key={i} style={{padding:"6px 8px",textAlign:"center"}}><span style={{padding:"3px 7px",borderRadius:5,background:pb(v),color:pc(v),fontWeight:700,fontSize:11}}>{(v>=0?"+":"")+v.toFixed(1)+"%"}</span></td>;})}
+                            <td style={{padding:"6px 8px",textAlign:"center"}}><span style={{padding:"3px 10px",borderRadius:6,background:pb(tot),color:pc(tot),fontWeight:800,fontSize:12}}>{(tot>=0?"+":"")+tot.toFixed(1)+"%"}</span></td>
+                          </tr>);
+                        })}</tbody>
+                      </table>);
+                    })()}
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -927,6 +1032,18 @@ export default function App() {
         {/* ═══ FONDS ═══ */}
         {tab==="fonds"&&(
           <div className="up">
+            <div style={{...gCard,padding:20,marginBottom:16,borderLeft:"3px solid "+GOLD}}>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:12}}>
+                <div>
+                  <div style={{fontSize:13,fontWeight:700,color:NAV,marginBottom:3}}>📡 Données réelles FMP</div>
+                  <div style={{fontSize:11,color:"#8292a8"}}>{fmpStats?"✅ "+fmpStats.real+" réels · "+fmpStats.simulated+" simulés":fmpLoading?"Chargement… "+fmpProgress+"%":"Chargez les performances historiques réelles"}</div>
+                </div>
+                <button onClick={loadFMPData} disabled={fmpLoading||!funds.length} style={{padding:"10px 18px",borderRadius:10,border:"none",background:fmpLoading?"#e5e7eb":"linear-gradient(135deg,#166534,#059669)",color:fmpLoading?"#9ca3af":"#fff",fontWeight:700,fontSize:12,cursor:fmpLoading||!funds.length?"not-allowed":"pointer",display:"flex",alignItems:"center",gap:8}}>
+                  {fmpLoading?<><div className="spin" style={{width:12,height:12,border:"2px solid rgba(255,255,255,.3)",borderTopColor:"#fff",borderRadius:"50%",display:"inline-block"}}/>{fmpProgress}%</>:"📥 Charger données FMP"}
+                </button>
+              </div>
+              {fmpLoading&&<div style={{marginTop:10,height:4,background:"#f0fdf4",borderRadius:2}}><div style={{height:4,width:fmpProgress+"%",background:"linear-gradient(90deg,#166534,#34d399)",borderRadius:2,transition:"width .3s"}}/></div>}
+            </div>
             <div style={{display:"flex",gap:8,marginBottom:16,alignItems:"center",flexWrap:"wrap"}}>
               <input value={search} onChange={function(e){setSearch(e.target.value);}} placeholder="🔍 Nom, ISIN, société…" style={{...gInp,maxWidth:260}}/>
               <select value={filterSri} onChange={function(e){setFilterSri(parseInt(e.target.value));}} style={gSel}><option value={0}>Tous SRI</option>{[1,2,3,4,5,6,7].map(function(r){return <option key={r} value={r}>SRI {r}</option>;})}</select>
