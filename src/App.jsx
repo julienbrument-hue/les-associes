@@ -1709,6 +1709,12 @@ export default function App() {
 
                 {results&&results.alloc&&(
                   <div>
+                    {/* Export PDF button */}
+                    <div style={{display:"flex",justifyContent:"flex-end",marginBottom:10}}>
+                      <button onClick={exportPDF} style={{padding:"10px 20px",borderRadius:10,border:"1.5px solid "+C.gold,background:"linear-gradient(135deg,"+C.navy+","+C.navyL+")",color:C.gold,fontWeight:700,fontSize:13,cursor:"pointer",display:"flex",alignItems:"center",gap:8,boxShadow:C.shadowMd,fontFamily:"inherit"}}>
+                        📄 Exporter PDF
+                      </button>
+                    </div>
                     {/* Stats pills */}
                     <div style={{display:"flex",gap:7,marginBottom:14,flexWrap:"wrap"}} className="fu">
                       {[
