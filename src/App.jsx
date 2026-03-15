@@ -879,13 +879,8 @@ export default function App() {
       }).join("\n");
       const marchesCtx=[...new Set(alloc.map(f=>f.fund.marche).filter(Boolean))].join(", ")||"diversifié";
       const montantCtx=manuelMontant?parseFloat(manuelMontant).toLocaleString("fr-FR")+"€":"non précisé";
-      const prompt = "Tu es conseiller senior Les Associés. Portefeuille MANUEL: "+perfCtx+" SRI moyen: "+sriMoyen+" Marchés: "+marchesCtx+" Montant: "+montantCtx+". Analyse chaque fonds. Réponds UNIQUEMENT en JSON: {\"synthese\":\"3 phrases\",\"fonds\":[{\"isin\":\"...\",\"role\":\"1 phrase\",\"pourquoi\":\"2 phrases\",\"vigilance\":\"1 point\"}]}";
-      const txt = await callClaude(prompt);
-      const clean = txt.replace(/```json|```/g,"").trim();
-      setManuelAi(JSON.parse(clean.slice(clean.indexOf("{"),clean.lastIndexOf("}")+1)));
-    } catch(e) { setManuelAi({error:true,msg:e.message}); }
-    setManuelAiLoading(false);
-  }
+      const prompt = "Tu es conseiller senior Les Associés, spécialiste allocation d'actifs.\n\"\n        +\"Portefeuille MANUEL défini par le conseiller :\n\"+perfCtx+\"\n\n\"\n        +\"SRI moyen : \"+sriMoyen+\" | Marchés : \"+marchesCtx+\" | Montant : \"+montantCtx+\"\n\n\"\n        +\"Analyse ce portefeuille comme un expert. Pour chaque fonds, justifie sa pertinence aujourd'hui \"\n        +\"(contexte macro précis : taux, spreads, valorisation sectorielle, flux). \"\n        +\"Identifie si la performance est structurelle ou conjoncturelle.\n\n\"\n        +\"Réponds en JSON strict sans markdown :\n\"\n        +'{\"synthese\":\"3 phrases : contexte marché actuel + cohérence du portefeuille + forces\",\"fonds\":[{\"isin\":\"...\",\"role\":\"1 phrase\",\"pourquoi\":\"2 phrases sur pertinence actuelle\",\"vigilance\":\"1 point de risque concret\"}]}';\n      const txt = await callClaude(prompt);\n      const clean = txt.replace(/```json|```/g,\"\").trim();\n      setManuelAi(JSON.parse(clean.slice(clean.indexOf(\"{\"),clean.lastIndexOf(\"}\")+1)));\n    } catch(e) { setManuelAi({error:true,msg:e.message}); }\n    setManuelAiLoading(false);\n  }\n\n  function openHtmlInNewTab(html) {\n    // Méthode 1 : Blob URL (contourne les popup blockers)\n    try {\n      var blob = new Blob([html], {type:\"text/html;charset=utf-8\"});\n      var url = URL.createObjectURL(blob);\n      var a = document.createElement(\"a\");\n      a.href = url;\n      a.target = \"_blank";
+
 
   function buildAllocSVG(alloc) {
     // Donut SVG en base64 pour le PDF
@@ -1840,29 +1835,32 @@ export default function App() {
                 {/* Tableau performances annuelles */}
                 <div style={{...card,padding:24}} className="fu4">
                   <div style={{fontSize:13,fontWeight:700,color:C.navy,marginBottom:4}}>📊 Performances annuelles par fonds</div>
-                  <div style={{fontSize:11,color:C.textDim,marginBottom:16}}>Simulations indicatives · base profil SRI</div>
+                  <div style={{fontSize:11,color:C.textDim,marginBottom:16}}>5 dernières années · simulations indicatives</div>
                   <div style={{overflowX:"auto"}}>
                     {(()=>{
                       const yr=new Date().getFullYear();
-                      const yrs=Array.from({length:10},(_,i)=>yr-10+i+1);
+                      const yrs=Array.from({length:5},(_,i)=>yr-5+i+1);
                       const pc=v=>v>=0?"#166534":"#991b1b";
                       const pb=v=>v>=0?"#f0fdf4":"#fef2f2";
                       return(
-                        <table style={{width:"100%",borderCollapse:"collapse",fontSize:12,minWidth:700}}>
+                        <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
                           <thead>
                             <tr style={{background:C.bgSub}}>
                               <th style={{padding:"9px 12px",textAlign:"left",fontWeight:700,color:C.navy,borderBottom:"2px solid "+C.borderGold,minWidth:160,whiteSpace:"nowrap"}}>Fonds</th>
                               {yrs.map(y=>(
-                                <th key={y} style={{padding:"9px 6px",textAlign:"center",fontWeight:600,color:C.textDim,borderBottom:"2px solid "+C.borderGold,whiteSpace:"nowrap",fontSize:11}}>{y}</th>
+                                <th key={y} style={{padding:"9px 10px",textAlign:"center",fontWeight:600,color:C.textDim,borderBottom:"2px solid "+C.borderGold,whiteSpace:"nowrap",fontSize:11}}>{y}</th>
                               ))}
-                              <th style={{padding:"9px 6px",textAlign:"center",fontWeight:700,color:C.gold,borderBottom:"2px solid "+C.borderGold,whiteSpace:"nowrap"}}>10 ans</th>
+                              <th style={{padding:"9px 10px",textAlign:"center",fontWeight:700,color:C.gold,borderBottom:"2px solid "+C.borderGold,whiteSpace:"nowrap"}}>5 ans</th>
                             </tr>
                           </thead>
                           <tbody>
                             {results.alloc.map((f,fi)=>{
                               const pts=getFondPerf(f);
-                              const ann=yrs.map((_,i)=>((pts[i+1]/pts[i])-1)*100);
-                              const tot=((pts[10]/pts[0])-1)*100;
+                              // pts[0]=base, pts[1..10]=annees yr-9 a yr
+                              // 5 dernières années = pts[6..10]
+                              const ann=yrs.map((_,i)=>((pts[6+i]/pts[5+i])-1)*100);
+                              const tot=((pts[10]/pts[5])-1)*100;
+                              const isReal=isFondReal(f);
                               const col=PALETTE[fi%PALETTE.length];
                               return(
                                 <tr key={f.id} style={{borderBottom:"1px solid "+C.borderGold,background:fi%2===0?"#fff":C.bgSub}}>
@@ -1870,20 +1868,23 @@ export default function App() {
                                     <div style={{display:"flex",alignItems:"center",gap:8}}>
                                       <div style={{width:10,height:10,borderRadius:3,background:col,flexShrink:0}}/>
                                       <div>
-                                        <div style={{fontWeight:700,color:C.navy,fontSize:12,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",maxWidth:150}}>{f.nom}</div>
-                                        <div style={{fontSize:10,color:C.textDim}}>{f.pct}% · SRI {f.sri}</div>
+                                        <div style={{fontWeight:700,color:C.navy,fontSize:12,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",maxWidth:160}}>{f.nom}</div>
+                                        <div style={{display:"flex",gap:4,alignItems:"center",marginTop:2}}>
+                                          <span style={{fontSize:10,color:C.textDim}}>{f.pct}% · SRI {f.sri}</span>
+                                          <span style={{fontSize:9,padding:"1px 5px",borderRadius:4,background:isReal?C.greenBg:C.goldXL,color:isReal?C.green:C.goldDim,fontWeight:700}}>{isReal?"Réel":"Simulé"}</span>
+                                        </div>
                                       </div>
                                     </div>
                                   </td>
                                   {ann.map((v,i)=>(
-                                    <td key={i} style={{padding:"6px 4px",textAlign:"center"}}>
-                                      <span style={{padding:"2px 5px",borderRadius:5,background:pb(v),color:pc(v),fontWeight:700,fontSize:10,whiteSpace:"nowrap"}}>
+                                    <td key={i} style={{padding:"6px 8px",textAlign:"center"}}>
+                                      <span style={{padding:"3px 8px",borderRadius:5,background:pb(v),color:pc(v),fontWeight:700,fontSize:11,whiteSpace:"nowrap"}}>
                                         {(v>=0?"+":"")+v.toFixed(1)+"%"}
                                       </span>
                                     </td>
                                   ))}
-                                  <td style={{padding:"6px 4px",textAlign:"center"}}>
-                                    <span style={{padding:"3px 8px",borderRadius:6,background:pb(tot),color:pc(tot),fontWeight:800,fontSize:11,whiteSpace:"nowrap"}}>
+                                  <td style={{padding:"6px 8px",textAlign:"center"}}>
+                                    <span style={{padding:"3px 10px",borderRadius:6,background:pb(tot),color:pc(tot),fontWeight:800,fontSize:12,whiteSpace:"nowrap"}}>
                                       {(tot>=0?"+":"")+tot.toFixed(1)+"%"}
                                     </span>
                                   </td>
