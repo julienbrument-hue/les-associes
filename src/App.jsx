@@ -875,12 +875,18 @@ export default function App() {
         const tot=((p[10]/p[0])-1)*100;
         const best=Math.max(...ann).toFixed(1);
         const worst=Math.min(...ann).toFixed(1);
-        return "- "+f.fund.nom+" | SRI"+f.fund.sri+" | "+(f.fund.marche||"—")+" | "+f.pct+"% | perf10ans:"+tot.toFixed(1)+"% | meilleure:+"+best+"% | pire:"+worst+"% | ISIN:"+(f.fund.isin||"—");
-      }).join("\n");
-      const marchesCtx=[...new Set(alloc.map(f=>f.fund.marche).filter(Boolean))].join(", ")||"diversifié";
-      const montantCtx=manuelMontant?parseFloat(manuelMontant).toLocaleString("fr-FR")+"€":"non précisé";
-      const prompt = "Tu es conseiller senior Les Associés, spécialiste allocation d'actifs.\n\"\n        +\"Portefeuille MANUEL défini par le conseiller :\n\"+perfCtx+\"\n\n\"\n        +\"SRI moyen : \"+sriMoyen+\" | Marchés : \"+marchesCtx+\" | Montant : \"+montantCtx+\"\n\n\"\n        +\"Analyse ce portefeuille comme un expert. Pour chaque fonds, justifie sa pertinence aujourd'hui \"\n        +\"(contexte macro précis : taux, spreads, valorisation sectorielle, flux). \"\n        +\"Identifie si la performance est structurelle ou conjoncturelle.\n\n\"\n        +\"Réponds en JSON strict sans markdown :\n\"\n        +'{\"synthese\":\"3 phrases : contexte marché actuel + cohérence du portefeuille + forces\",\"fonds\":[{\"isin\":\"...\",\"role\":\"1 phrase\",\"pourquoi\":\"2 phrases sur pertinence actuelle\",\"vigilance\":\"1 point de risque concret\"}]}';\n      const txt = await callClaude(prompt);\n      const clean = txt.replace(/```json|```/g,\"\").trim();\n      setManuelAi(JSON.parse(clean.slice(clean.indexOf(\"{\"),clean.lastIndexOf(\"}\")+1)));\n    } catch(e) { setManuelAi({error:true,msg:e.message}); }\n    setManuelAiLoading(false);\n  }\n\n  function openHtmlInNewTab(html) {\n    // Méthode 1 : Blob URL (contourne les popup blockers)\n    try {\n      var blob = new Blob([html], {type:\"text/html;charset=utf-8\"});\n      var url = URL.createObjectURL(blob);\n      var a = document.createElement(\"a\");\n      a.href = url;\n      a.target = \"_blank";
-
+        return '- '+f.fund.nom+' | SRI'+f.fund.sri+' | '+(f.fund.marche||'—')+' | '+f.pct+'% | perf10ans:'+tot.toFixed(1)+'% | meilleure:+'+best+'% | pire:'+worst+'% | ISIN:'+(f.fund.isin||'—');
+      }).join('
+');
+      const marchesCtx=[...new Set(alloc.map(f=>f.fund.marche).filter(Boolean))].join(', ')||'diversifié';
+      const montantCtx=manuelMontant?parseFloat(manuelMontant).toLocaleString('fr-FR')+'€':'non précisé';
+      const prompt = 'Tu es conseiller senior Les Associés, spécialiste allocation. Portefeuille MANUEL: '+perfCtx+' SRI moyen: '+sriMoyen+' Marchés: '+marchesCtx+' Montant: '+montantCtx+'. Analyse chaque fonds (macro, taux, spreads). Réponds UNIQUEMENT en JSON: {"synthese":"3 phrases","fonds":[{"isin":"...","role":"1 phrase","pourquoi":"2 phrases","vigilance":"1 point"}]}';
+      const txt = await callClaude(prompt);
+      const clean = txt.replace(/```json|```/g,'').trim();
+      setManuelAi(JSON.parse(clean.slice(clean.indexOf('{'),clean.lastIndexOf('}')+1)));
+    } catch(e) { setManuelAi({error:true,msg:e.message}); }
+    setManuelAiLoading(false);
+  }
 
   function buildAllocSVG(alloc) {
     // Donut SVG en base64 pour le PDF
