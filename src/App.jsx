@@ -1507,7 +1507,7 @@ export default function App() {
         ::-webkit-scrollbar-track{background:transparent}
         ::-webkit-scrollbar-thumb{background:rgba(201,162,39,.35);border-radius:2px}
         .hov:hover{background:rgba(15,35,64,0.03)!important;border-color:rgba(201,162,39,0.4)!important}
-        body::before{content:'';position:fixed;top:0;left:0;width:210px;height:100%;background:linear-gradient(180deg,#0f2340 0%,#1a3560 100%);z-index:0;pointer-events:none}
+        body::before{content:'';position:fixed;top:0;left:0;width:180px;height:100%;background:linear-gradient(180deg,#0f2340 0%,#1a3560 100%);z-index:0;pointer-events:none}
       `}</style>
 
       {/* ── LAYOUT : SIDEBAR + CONTENU ──────────────────────────────────── */}
@@ -1515,7 +1515,7 @@ export default function App() {
 
         {/* ── SIDEBAR GAUCHE ── */}
         <div style={{
-          width:210,flexShrink:0,
+          width:180,flexShrink:0,
           background:"linear-gradient(180deg,"+C.navy+" 0%,"+C.navyL+" 100%)",
           boxShadow:"4px 0 20px rgba(15,35,64,0.15)",
           display:"flex",flexDirection:"column",
