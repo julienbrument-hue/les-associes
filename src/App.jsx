@@ -1595,7 +1595,7 @@ export default function App() {
             {/* ════ MODE AUTOMATIQUE ════ */}
             {allocMode==="auto"&&(
             <div>
-            <div style={{display:"grid",gridTemplateColumns:"340px 1fr",gap:20,alignItems:"start"}}>
+            <div style={{display:"grid",gridTemplateColumns:"276px 1fr",gap:20,alignItems:"start"}}>
 
               {/* Panneau gauche */}
               <div style={{...card,padding:22,position:"sticky",top:68}}>
@@ -1820,6 +1820,66 @@ export default function App() {
                   <div style={{fontSize:13,fontWeight:700,color:C.navy,marginBottom:4}}>📈 Performances simulées — 10 ans</div>
                   <div style={{fontSize:11,color:C.textDim,marginBottom:14}}>Base 100 · simulation indicative par profil SRI</div>
                   <PerfChart funds={results.alloc} getPts={getFondPerf}/>
+                </div>
+
+                {/* Tableau performances annuelles */}
+                <div style={{...card,padding:24}} className="fu4">
+                  <div style={{fontSize:13,fontWeight:700,color:C.navy,marginBottom:4}}>📊 Performances annuelles par fonds</div>
+                  <div style={{fontSize:11,color:C.textDim,marginBottom:16}}>Simulations indicatives · base profil SRI</div>
+                  <div style={{overflowX:"auto"}}>
+                    {(()=>{
+                      const yr=new Date().getFullYear();
+                      const yrs=Array.from({length:10},(_,i)=>yr-10+i+1);
+                      const pc=v=>v>=0?"#166534":"#991b1b";
+                      const pb=v=>v>=0?"#f0fdf4":"#fef2f2";
+                      return(
+                        <table style={{width:"100%",borderCollapse:"collapse",fontSize:12,minWidth:700}}>
+                          <thead>
+                            <tr style={{background:C.bgSub}}>
+                              <th style={{padding:"9px 12px",textAlign:"left",fontWeight:700,color:C.navy,borderBottom:"2px solid "+C.borderGold,minWidth:160,whiteSpace:"nowrap"}}>Fonds</th>
+                              {yrs.map(y=>(
+                                <th key={y} style={{padding:"9px 6px",textAlign:"center",fontWeight:600,color:C.textDim,borderBottom:"2px solid "+C.borderGold,whiteSpace:"nowrap",fontSize:11}}>{y}</th>
+                              ))}
+                              <th style={{padding:"9px 6px",textAlign:"center",fontWeight:700,color:C.gold,borderBottom:"2px solid "+C.borderGold,whiteSpace:"nowrap"}}>10 ans</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {results.alloc.map((f,fi)=>{
+                              const pts=getFondPerf(f);
+                              const ann=yrs.map((_,i)=>((pts[i+1]/pts[i])-1)*100);
+                              const tot=((pts[10]/pts[0])-1)*100;
+                              const col=PALETTE[fi%PALETTE.length];
+                              return(
+                                <tr key={f.id} style={{borderBottom:"1px solid "+C.borderGold,background:fi%2===0?"#fff":C.bgSub}}>
+                                  <td style={{padding:"9px 12px"}}>
+                                    <div style={{display:"flex",alignItems:"center",gap:8}}>
+                                      <div style={{width:10,height:10,borderRadius:3,background:col,flexShrink:0}}/>
+                                      <div>
+                                        <div style={{fontWeight:700,color:C.navy,fontSize:12,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",maxWidth:150}}>{f.nom}</div>
+                                        <div style={{fontSize:10,color:C.textDim}}>{f.pct}% · SRI {f.sri}</div>
+                                      </div>
+                                    </div>
+                                  </td>
+                                  {ann.map((v,i)=>(
+                                    <td key={i} style={{padding:"6px 4px",textAlign:"center"}}>
+                                      <span style={{padding:"2px 5px",borderRadius:5,background:pb(v),color:pc(v),fontWeight:700,fontSize:10,whiteSpace:"nowrap"}}>
+                                        {(v>=0?"+":"")+v.toFixed(1)+"%"}
+                                      </span>
+                                    </td>
+                                  ))}
+                                  <td style={{padding:"6px 4px",textAlign:"center"}}>
+                                    <span style={{padding:"3px 8px",borderRadius:6,background:pb(tot),color:pc(tot),fontWeight:800,fontSize:11,whiteSpace:"nowrap"}}>
+                                      {(tot>=0?"+":"")+tot.toFixed(1)+"%"}
+                                    </span>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      );
+                    })()}
+                  </div>
                 </div>
               </div>
             )}
