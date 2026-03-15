@@ -453,6 +453,7 @@ if (typeof window !== 'undefined') {
   };
 }
 
+function openHtmlInNewTab(h){try{var b=new Blob([h],{type:"text/html});var u=URL.createObjectURL(b);var a=document.createElement(a);a.href=u;a.download=les-associes.html;document.body.appendChild(a);a.click();setTimeout(function(){document.body.removeChild(a);URL.revokeObjectURL(u);},1000);}catch(e){}}
 export default function App() {
   const [tab,setTab]=useState("allocation");
   const [funds,setFunds]=useState([]);
