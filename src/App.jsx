@@ -1507,7 +1507,7 @@ export default function App() {
         ::-webkit-scrollbar-track{background:transparent}
         ::-webkit-scrollbar-thumb{background:rgba(201,162,39,.35);border-radius:2px}
         .hov:hover{background:rgba(15,35,64,0.03)!important;border-color:rgba(201,162,39,0.4)!important}
-        body::before{content:'';position:fixed;top:0;left:0;width:160px;height:100%;background:linear-gradient(180deg,#0f2340 0%,#1a3560 100%);z-index:0;pointer-events:none}
+        body::before{content:'';position:fixed;top:0;left:0;width:180px;height:100%;background:linear-gradient(180deg,#0f2340 0%,#1a3560 100%);z-index:0;pointer-events:none}
       `}</style>
 
       {/* ── LAYOUT : SIDEBAR + CONTENU ──────────────────────────────────── */}
@@ -1515,57 +1515,56 @@ export default function App() {
 
         {/* ── SIDEBAR GAUCHE ── */}
         <div style={{
-          width:160,flexShrink:0,
+          width:180,flexShrink:0,
           background:"linear-gradient(180deg,"+C.navy+" 0%,"+C.navyL+" 100%)",
           boxShadow:"4px 0 20px rgba(15,35,64,0.15)",
           display:"flex",flexDirection:"column",
           position:"sticky",top:0,height:"100vh",
           overflowY:"auto",zIndex:100,
         }}>          {/* Logo */}
-          <div style={{padding:"24px 18px 20px",borderBottom:"1px solid rgba(201,162,39,0.2)"}}>
-            <div style={{display:"flex",alignItems:"center",gap:11}}>
+          <div style={{padding:"24px 12px 20px",borderBottom:"1px solid rgba(201,162,39,0.2)",textAlign:"center"}}>
+            <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:8}}>
               <div style={{width:44,height:44,borderRadius:12,background:"rgba(255,255,255,0.07)",border:"1.5px solid rgba(201,162,39,0.45)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,boxShadow:"0 0 0 3px rgba(201,162,39,0.1)"}}>
                 <span style={{fontFamily:"Georgia,serif",fontSize:23,fontWeight:700,color:C.gold,fontStyle:"italic",lineHeight:1}}>A</span>
               </div>
-              <div>
-                <div style={{fontSize:15,fontWeight:800,color:"#fff",letterSpacing:-.3,lineHeight:1.2}}>Les Associés</div>
-                <div style={{fontSize:8,color:"rgba(201,162,39,0.65)",letterSpacing:1.8,textTransform:"uppercase",marginTop:2}}>Moteur d'allocation</div>
+              <div style={{textAlign:"center"}}>
+                <div style={{fontSize:13,fontWeight:800,color:"#fff",letterSpacing:-.3,lineHeight:1.2}}>Les Associés</div>
+                <div style={{fontSize:7,color:"rgba(201,162,39,0.65)",letterSpacing:1.4,textTransform:"uppercase",marginTop:2}}>Moteur d'allocation</div>
               </div>
             </div>
           </div>
 
           {/* Nav items */}
-          <nav style={{flex:1,padding:"20px 10px 16px",display:"flex",flexDirection:"column",gap:2}}>
-            <div style={{fontSize:8.5,color:"rgba(255,255,255,0.28)",fontWeight:700,letterSpacing:1.6,textTransform:"uppercase",marginBottom:10,paddingLeft:10}}>Navigation</div>
+          <nav style={{flex:1,padding:"20px 6px 16px",display:"flex",flexDirection:"column",gap:2}}>
+            <div style={{fontSize:8,color:"rgba(255,255,255,0.28)",fontWeight:700,letterSpacing:1.4,textTransform:"uppercase",marginBottom:10,textAlign:"center"}}>Navigation</div>
             {TABS.map(t=>{const a=tab===t.k;return(
               <button key={t.k} onClick={()=>{
                 if(t.k==="import"&&!importUnlocked){setShowPinModal(true);return;}
                 setTab(t.k);
               }} style={{
-                width:"100%",padding:"11px 13px",borderRadius:9,border:"none",
+                width:"100%",padding:"10px 8px",borderRadius:9,border:"none",
                 background:a?"rgba(201,162,39,0.15)":"transparent",
                 borderLeft:a?"3px solid "+C.gold:"3px solid transparent",
                 color:a?"#fff":"rgba(255,255,255,0.5)",
-                fontWeight:a?700:400,fontSize:12.5,cursor:"pointer",
-                display:"flex",alignItems:"center",gap:9,
-                transition:"all .18s",textAlign:"left",fontFamily:"inherit",
+                fontWeight:a?700:400,fontSize:11.5,cursor:"pointer",
+                display:"flex",alignItems:"center",justifyContent:"center",gap:7,
+                transition:"all .18s",textAlign:"center",fontFamily:"inherit",
               }}
               onMouseEnter={e=>{if(!a){e.currentTarget.style.background="rgba(255,255,255,0.06)";e.currentTarget.style.color="rgba(255,255,255,0.8)";}}}
               onMouseLeave={e=>{if(!a){e.currentTarget.style.background="transparent";e.currentTarget.style.color="rgba(255,255,255,0.5)";}}}
               >
-                <span style={{fontSize:15,width:20,textAlign:"center",flexShrink:0}}>{t.icon}</span>
-                <span style={{flex:1,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{t.label}</span>
-                {t.k==="import"&&!importUnlocked&&<span style={{fontSize:11,opacity:.6}}>🔒</span>}
-                {a&&<div style={{width:5,height:5,borderRadius:"50%",background:C.gold,flexShrink:0}}/>}
+                <span style={{fontSize:14,flexShrink:0}}>{t.icon}</span>
+                <span style={{whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{t.label}</span>
+                {t.k==="import"&&!importUnlocked&&<span style={{fontSize:10,opacity:.6}}>🔒</span>}
               </button>
             );})}
           </nav>
 
           {/* Bottom info */}
-          <div style={{padding:"14px 12px 20px",borderTop:"1px solid rgba(201,162,39,0.14)"}}>
-            <div style={{padding:"9px 11px",borderRadius:8,background:"rgba(255,255,255,0.04)"}}>
-              <div style={{fontSize:11,fontWeight:600,color:"rgba(255,255,255,0.5)",marginBottom:1}}>v1.0 · Les Associés</div>
-              <div style={{fontSize:9,color:"rgba(255,255,255,0.22)"}}>Données simulées indicatives</div>
+          <div style={{padding:"12px 8px 16px",borderTop:"1px solid rgba(201,162,39,0.14)",textAlign:"center"}}>
+            <div style={{padding:"8px",borderRadius:8,background:"rgba(255,255,255,0.04)"}}>
+              <div style={{fontSize:10,fontWeight:600,color:"rgba(255,255,255,0.5)",marginBottom:1}}>v1.0 · Les Associés</div>
+              <div style={{fontSize:8,color:"rgba(255,255,255,0.22)"}}>Données simulées</div>
             </div>
           </div>
         </div>
@@ -1595,7 +1594,7 @@ export default function App() {
             {/* ════ MODE AUTOMATIQUE ════ */}
             {allocMode==="auto"&&(
             <div>
-            <div style={{display:"grid",gridTemplateColumns:"220px 1fr",gap:20,alignItems:"start"}}>
+            <div style={{display:"grid",gridTemplateColumns:"240px 1fr",gap:20,alignItems:"start"}}>
 
               {/* Panneau gauche */}
               <div style={{...card,padding:22,position:"sticky",top:68}}>
