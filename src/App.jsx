@@ -410,7 +410,7 @@ export default function App() {
     return f.slice().sort(function(a,b){if(rechSort==="sri")return a.sri-b.sri;if(rechSort==="sriDesc")return b.sri-a.sri;if(rechSort==="marche")return(a.marche||"").localeCompare(b.marche||"");return a.nom.localeCompare(b.nom);});
   })();
 
-  const tabs=[{k:"allocation",i:"⚖️",l:"Allocation"},{k:"comparaison",i:"📊",l:"Comparaison"},{k:"fonds",i:"📋",l:"Fonds ("+funds.length+")"},{k:"import",i:"📁",l:"Import CSV"}];
+  const tabs=[{k:"allocation",i:"⚖️",l:"Allocation"},{k:"comparaison",i:"📊",l:"Comparaison"},{k:"actualite",i:"🌍",l:"Actualité"},{k:"fonds",i:"📋",l:"Fonds ("+funds.length+")"},{k:"import",i:"📁",l:"Import CSV"}];
 
   return (
     <div style={{background:"linear-gradient(160deg,#f8f6f0,#ede8da)",minHeight:"100vh",fontFamily:"system-ui,sans-serif",paddingBottom:48}}>
@@ -847,6 +847,130 @@ export default function App() {
             </div>
           </div>
         )}
+
+        {/* ═══ ACTUALITÉ ═══ */}
+        {tab==="actualite"&&(()=>{
+          const [actu,setActu]=useState(null);
+          const [actuLoading,setActuLoading]=useState(false);
+          const [actuSection,setActuSection]=useState("global");
+
+          const SECTIONS=[
+            {k:"global",l:"Vue globale",i:"🌐"},
+            {k:"actions",l:"Marchés actions",i:"📈"},
+            {k:"taux",l:"Taux & Obligations",i:"🏦"},
+            {k:"geo",l:"Géopolitique",i:"🌍"},
+            {k:"matieres",l:"Matières premières",i:"⚡"},
+            {k:"crypto",l:"Crypto & Alternatifs",i:"₿"},
+          ];
+
+          async function loadActu(section) {
+            setActuLoading(true);
+            setActuSection(section);
+            const prompts={
+              global:"Tu es stratégiste senior chez une grande banque d'investissement. Date: "+new Date().toLocaleDateString("fr-FR",{day:"2-digit",month:"long",year:"numeric"})+". Donne une analyse macro globale des marchés financiers mondiaux aujourd'hui: état des marchés actions (US, Europe, Asie), politique monétaire des banques centrales (Fed, BCE, BoJ), risques géopolitiques majeurs, et recommandations d'allocation. Sois précis, factuel, professionnel. Réponds en JSON: {\"titre\":\"titre accrocheur\",\"resume\":\"3-4 phrases synthèse\",\"points\":[{\"titre\":\"titre\",\"contenu\":\"2-3 phrases\",\"sentiment\":\"positif|negatif|neutre\",\"impact\":\"fort|moyen|faible\"}],\"recommandation\":\"1-2 phrases conseil allocation\"}",
+              actions:"Tu es analyste actions senior. Date: "+new Date().toLocaleDateString("fr-FR")+". Analyse détaillée des marchés actions mondiaux: CAC40, S&P500, Nasdaq, Eurostoxx50, Nikkei, marchés émergents. Valorisations, momentum, secteurs porteurs et à éviter. Réponds en JSON: {\"titre\":\"titre\",\"resume\":\"synthèse\",\"points\":[{\"titre\":\"marché ou thème\",\"contenu\":\"analyse\",\"sentiment\":\"positif|negatif|neutre\",\"impact\":\"fort|moyen|faible\"}],\"recommandation\":\"conseil\"}",
+              taux:"Tu es spécialiste taux et fixed income. Date: "+new Date().toLocaleDateString("fr-FR")+". Analyse: politique Fed et BCE, courbes de taux US et européennes, spreads de crédit IG et HY, marchés obligataires émergents, perspectives inflation. Réponds en JSON: {\"titre\":\"titre\",\"resume\":\"synthèse\",\"points\":[{\"titre\":\"sujet\",\"contenu\":\"analyse\",\"sentiment\":\"positif|negatif|neutre\",\"impact\":\"fort|moyen|faible\"}],\"recommandation\":\"conseil\"}",
+              geo:"Tu es analyste géopolitique spécialisé en risques financiers. Date: "+new Date().toLocaleDateString("fr-FR")+". Analyse les principaux foyers de tension géopolitique et leur impact financier: conflits, élections majeures, tensions commerciales, sanctions. Réponds en JSON: {\"titre\":\"titre\",\"resume\":\"synthèse\",\"points\":[{\"titre\":\"foyer de tension\",\"contenu\":\"analyse et impact financier\",\"sentiment\":\"positif|negatif|neutre\",\"impact\":\"fort|moyen|faible\"}],\"recommandation\":\"conseil\"}",
+              matieres:"Tu es analyste matières premières. Date: "+new Date().toLocaleDateString("fr-FR")+". Analyse: pétrole (Brent/WTI), gaz naturel, or, métaux industriels (cuivre, lithium), agricoles. Facteurs offre/demande, géopolitique, transition énergétique. Réponds en JSON: {\"titre\":\"titre\",\"resume\":\"synthèse\",\"points\":[{\"titre\":\"matière première\",\"contenu\":\"analyse\",\"sentiment\":\"positif|negatif|neutre\",\"impact\":\"fort|moyen|faible\"}],\"recommandation\":\"conseil\"}",
+              crypto:"Tu es analyste actifs alternatifs et crypto. Date: "+new Date().toLocaleDateString("fr-FR")+". Analyse: Bitcoin, Ethereum, altcoins majeurs, régulation crypto mondiale, DeFi, ETFs crypto, hedge funds alternatifs, private equity secondaire. Réponds en JSON: {\"titre\":\"titre\",\"resume\":\"synthèse\",\"points\":[{\"titre\":\"actif ou thème\",\"contenu\":\"analyse\",\"sentiment\":\"positif|negatif|neutre\",\"impact\":\"fort|moyen|faible\"}],\"recommandation\":\"conseil\"}",
+            };
+            try {
+              const txt=await callClaude(prompts[section]);
+              const clean=txt.replace(/```json|```/g,"").trim();
+              setActu(JSON.parse(clean.slice(clean.indexOf("{"),clean.lastIndexOf("}")+1)));
+            } catch(e){ setActu({error:true,msg:e.message}); }
+            setActuLoading(false);
+          }
+
+          useEffect(()=>{ loadActu("global"); },[]);
+
+          const sentColor=s=>s==="positif"?"#166534":s==="negatif"?"#991b1b":"#92400e";
+          const sentBg=s=>s==="positif"?"#f0fdf4":s==="negatif"?"#fef2f2":"#fffbeb";
+          const impactColor=i=>i==="fort"?"#991b1b":i==="moyen"?"#92400e":"#166534";
+
+          return(
+            <div className="up">
+              {/* Header */}
+              <div style={{...gCard,padding:24,marginBottom:16,background:"linear-gradient(135deg,"+NAV+","+NAVL+")",border:"none"}}>
+                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:12}}>
+                  <div>
+                    <div style={{fontSize:20,fontWeight:800,color:"#fff",marginBottom:4}}>🌍 Actualité Financière & Géopolitique</div>
+                    <div style={{fontSize:12,color:"rgba(201,162,39,0.8)"}}>Analyse IA en temps réel · {new Date().toLocaleDateString("fr-FR",{weekday:"long",day:"2-digit",month:"long",year:"numeric"})}</div>
+                  </div>
+                  <button onClick={()=>loadActu(actuSection)} disabled={actuLoading} style={{padding:"10px 20px",borderRadius:10,border:"1.5px solid "+GOLD,background:"transparent",color:GOLD,fontWeight:700,fontSize:12,cursor:"pointer",display:"flex",alignItems:"center",gap:8}}>
+                    {actuLoading?"⏳ Chargement...":"🔄 Actualiser"}
+                  </button>
+                </div>
+              </div>
+
+              {/* Section tabs */}
+              <div style={{display:"flex",gap:6,marginBottom:16,flexWrap:"wrap"}}>
+                {SECTIONS.map(s=>(
+                  <button key={s.k} onClick={()=>loadActu(s.k)} style={{padding:"8px 14px",borderRadius:20,border:"1.5px solid "+(actuSection===s.k?GOLD:"rgba(201,162,39,0.2)"),background:actuSection===s.k?GOLD:"#fff",color:actuSection===s.k?NAV:"#3d4f6e",fontWeight:actuSection===s.k?700:400,fontSize:12,cursor:"pointer",display:"flex",alignItems:"center",gap:5}}>
+                    <span>{s.i}</span>{s.l}
+                  </button>
+                ))}
+              </div>
+
+              {/* Loading */}
+              {actuLoading&&(
+                <div style={{...gCard,padding:48,textAlign:"center"}}>
+                  <div style={{fontSize:32,marginBottom:12}}>⏳</div>
+                  <div style={{fontSize:14,fontWeight:700,color:NAV,marginBottom:6}}>Analyse en cours…</div>
+                  <div style={{fontSize:12,color:"#8292a8"}}>Claude analyse les marchés et l'actualité géopolitique</div>
+                </div>
+              )}
+
+              {/* Error */}
+              {!actuLoading&&actu&&actu.error&&(
+                <div style={{...gCard,padding:20,borderLeft:"3px solid #ef4444",color:"#991b1b",fontSize:13}}>
+                  Analyse indisponible — {actu.msg}
+                </div>
+              )}
+
+              {/* Content */}
+              {!actuLoading&&actu&&!actu.error&&(
+                <div style={{display:"flex",flexDirection:"column",gap:14}}>
+                  {/* Titre + résumé */}
+                  <div style={{...gCard,padding:24,borderTop:"3px solid "+GOLD}}>
+                    <div style={{fontSize:17,fontWeight:800,color:NAV,marginBottom:12}}>{actu.titre}</div>
+                    <div style={{fontSize:13,color:"#3d4f6e",lineHeight:1.8,borderLeft:"3px solid "+GOLD,paddingLeft:14}}>{actu.resume}</div>
+                  </div>
+
+                  {/* Points clés */}
+                  {actu.points&&actu.points.length>0&&(
+                    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:12}}>
+                      {actu.points.map((p,i)=>(
+                        <div key={i} style={{...gCard,padding:18,borderTop:"2px solid "+sentBg(p.sentiment)}}>
+                          <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:8,gap:8}}>
+                            <div style={{fontSize:13,fontWeight:700,color:NAV,flex:1}}>{p.titre}</div>
+                            <div style={{display:"flex",gap:4,flexShrink:0}}>
+                              <span style={{padding:"2px 7px",borderRadius:6,background:sentBg(p.sentiment),color:sentColor(p.sentiment),fontSize:9,fontWeight:700,textTransform:"uppercase"}}>{p.sentiment}</span>
+                              <span style={{padding:"2px 7px",borderRadius:6,background:"#f8f6f0",color:impactColor(p.impact),fontSize:9,fontWeight:700,textTransform:"uppercase"}}>impact {p.impact}</span>
+                            </div>
+                          </div>
+                          <div style={{fontSize:12,color:"#3d4f6e",lineHeight:1.7}}>{p.contenu}</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Recommandation */}
+                  {actu.recommandation&&(
+                    <div style={{...gCard,padding:20,background:"linear-gradient(135deg,#fffbeb,#fef9ec)",border:"1.5px solid rgba(201,162,39,0.3)"}}>
+                      <div style={{fontSize:11,fontWeight:700,color:"#92400e",textTransform:"uppercase",letterSpacing:.8,marginBottom:8}}>💡 Recommandation d'allocation</div>
+                      <div style={{fontSize:13,color:NAV,fontWeight:600,lineHeight:1.7}}>{actu.recommandation}</div>
+                    </div>
+                  )}
+
+                  <div style={{fontSize:10,color:"#8292a8",textAlign:"center",paddingTop:4}}>
+                    ⚠ Analyse générée par IA à titre informatif uniquement. Ne constitue pas un conseil en investissement.
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })()}
 
         {/* ═══ IMPORT CSV ═══ */}
         {tab==="import"&&(
