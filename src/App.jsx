@@ -455,6 +455,9 @@ if (typeof window !== 'undefined') {
 
 function openHtmlInNewTab(html) {
   try {
+    var w = window.open("", "_blank", "width=1200,height=900");
+    if (w) { w.document.write(html); w.document.close(); w.focus(); setTimeout(function(){ w.print(); }, 800); return true; }
+    // fallback: download
     var blob = new Blob([html], {type:"text/html;charset=utf-8"});
     var url = URL.createObjectURL(blob);
     var a = document.createElement("a");
