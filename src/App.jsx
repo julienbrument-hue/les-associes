@@ -863,7 +863,7 @@ export default function App() {
       const marchesCtx=[...new Set(alloc.map(f=>f.fund.marche).filter(Boolean))].join(", ")||"diversifié";
       const montantCtx=manuelMontant?parseFloat(manuelMontant).toLocaleString("fr-FR")+"€":"non précisé";
       const prompt = "Tu es conseiller senior Les Associés, spécialiste allocation d'actifs.\n\"\n        +\"Portefeuille MANUEL défini par le conseiller :\n\"+perfCtx+\"\n\n\"\n        +\"SRI moyen : \"+sriMoyen+\" | Marchés : \"+marchesCtx+\" | Montant : \"+montantCtx+\"\n\n\"\n        +\"Analyse ce portefeuille comme un expert. Pour chaque fonds, justifie sa pertinence aujourd'hui \"\n        +\"(contexte macro précis : taux, spreads, valorisation sectorielle, flux). \"\n        +\"Identifie si la performance est structurelle ou conjoncturelle.\n\n\"\n        +\"Réponds en JSON strict sans markdown :\n\"\n        +'{\"synthese\":\"3 phrases : contexte marché actuel + cohérence du portefeuille + forces\",\"fonds\":[{\"isin\":\"...\",\"role\":\"1 phrase\",\"pourquoi\":\"2 phrases sur pertinence actuelle\",\"vigilance\":\"1 point de risque concret\"}]}';\n      const txt = await callClaude(prompt);\n      const clean = txt.replace(/```json|```/g,\"\").trim();\n      setManuelAi(JSON.parse(clean.slice(clean.indexOf(\"{\"),clean.lastIndexOf(\"}\")+1)));\n    } catch(e) { setManuelAi({error:true,msg:e.message}); }\n    setManuelAiLoading(false);\n  }\n\n  function openHtmlInNewTab(html) {\n    // Méthode 1 : Blob URL (contourne les popup blockers)\n    try {\n      var blob = new Blob([html], {type:\"text/html;charset=utf-8\"});\n      var url = URL.createObjectURL(blob);\n      var a = document.createElement(\"a\");\n      a.href = url;\n      a.target = \"_blank";
-      a.download = "allocation-les-associes-" + new Date().toISOString().slice(0,10) + ".html";
+      a.rel = "noopener";
       document.body.appendChild(a);
       a.click();
       setTimeout(function(){document.body.removeChild(a);URL.revokeObjectURL(url);}, 1000);
@@ -1709,12 +1709,6 @@ export default function App() {
 
                 {results&&results.alloc&&(
                   <div>
-                    {/* Export PDF button */}
-                    <div style={{display:"flex",justifyContent:"flex-end",marginBottom:10}}>
-                      <button onClick={exportPDF} style={{padding:"10px 20px",borderRadius:10,border:"1.5px solid "+C.gold,background:"linear-gradient(135deg,"+C.navy+","+C.navyL+")",color:C.gold,fontWeight:700,fontSize:13,cursor:"pointer",display:"flex",alignItems:"center",gap:8,boxShadow:C.shadowMd,fontFamily:"inherit"}}>
-                        📄 Exporter PDF
-                      </button>
-                    </div>
                     {/* Stats pills */}
                     <div style={{display:"flex",gap:7,marginBottom:14,flexWrap:"wrap"}} className="fu">
                       {[
