@@ -2585,75 +2585,7 @@ export default function App() {
                 }}>{DUREES.map(d => <option key={d}>{d}</option>)}</select>], ["Compagnie", <select value={compagnie} onChange={e => setCompagnie(e.target.value)} style={{
                   ...sel,
                   width: "100%"
-                }}><option value="">Toutes compagnies</option>{allCompagnies.map(c => <option key={c}>{c}</option>)}</select>], ["Marchés cibles", <div> {marches.length > 0 && <div style={{
-                    marginBottom: 7,
-                    display: "flex",
-                    flexWrap: "wrap",
-                    gap: 3
-                  }}> {marches.map(m => <span key={m} style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 4,
-                      padding: "2px 8px",
-                      borderRadius: 20,
-                      background: "linear-gradient(135deg," + C.navy + "," + C.navyL + ")",
-                      color: C.gold,
-                      fontSize: 10,
-                      fontWeight: 700,
-                      border: "1px solid rgba(201,162,39,0.3)"
-                    }}> {m} <button onClick={() => setMarches(ms => ms.filter(x => x !== m))} style={{
-                        background: "none",
-                        border: "none",
-                        color: "rgba(201,162,39,0.6)",
-                        cursor: "pointer",
-                        padding: 0,
-                        fontSize: 11,
-                        lineHeight: 1,
-                        marginLeft: 1
-                      }}>✕</button> </span>)} <button onClick={() => setMarches([])} style={{
-                      fontSize: 9,
-                      color: C.red,
-                      background: "none",
-                      border: "none",
-                      cursor: "pointer",
-                      padding: "2px 4px",
-                      fontFamily: "inherit"
-                    }}>Tout effacer</button> </div>} {MARCHES_GROUPES.map(g => <div key={g.groupe} style={{
-                    marginBottom: 8
-                  }}> <div style={{
-                      fontSize: 9,
-                      fontWeight: 700,
-                      color: g.couleur,
-                      textTransform: "uppercase",
-                      letterSpacing: .8,
-                      marginBottom: 4,
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 5
-                    }}> <div style={{
-                        width: 8,
-                        height: 8,
-                        borderRadius: 2,
-                        background: g.couleur,
-                        flexShrink: 0
-                      }} /> {g.groupe} </div> <div style={{
-                      display: "flex",
-                      flexWrap: "wrap",
-                      gap: 3
-                    }}> {g.items.map(m => {
-                        const s = marches.includes(m);
-                        return <button key={m} onClick={() => setMarches(ms => s ? ms.filter(x => x !== m) : [...ms, m])} style={{
-                          padding: "3px 8px",
-                          borderRadius: 5,
-                          border: "1px solid " + (s ? g.couleur + "80" : C.borderGold),
-                          background: s ? g.couleur + "14" : C.bgSub,
-                          color: s ? g.couleur : C.textDim,
-                          fontSize: 10,
-                          fontWeight: s ? 700 : 400,
-                          cursor: "pointer",
-                          transition: "all .12s"
-                        }}> {m} </button>;
-                      })} </div> </div>)} </div>], ["Montant (€)", <div> <input type="number" value={montant} onChange={e => setMontant(e.target.value)} placeholder="Ex : 50 000" style={inp} /> {montant && !isNaN(parseFloat(montant)) && <div style={{
+                }}><option value="">Toutes compagnies</option>{allCompagnies.map(c => <option key={c}>{c}</option>)}</select>], ["Marchés cibles", <div> <select onChange={e => { if (e.target.value && !marches.includes(e.target.value)) setMarches(ms => [...ms, e.target.value]); e.target.value = ""; }} style={{ ...sel, width: "100%", marginBottom: marches.length > 0 ? 8 : 0 }}> <option value="">Sélectionner un marché...</option> {MARCHES_GROUPES.map(g => <optgroup key={g.groupe} label={g.groupe}> {g.items.filter(m => !marches.includes(m)).map(m => <option key={m} value={m}>{m}</option>)} </optgroup>)} </select> {marches.length > 0 && <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}> {marches.map(m => { const groupe = MARCHES_GROUPES.find(g => g.items.includes(m)); const couleur = groupe ? groupe.couleur : C.navy; return <span key={m} style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "4px 10px", borderRadius: 20, background: couleur + "10", color: couleur, fontSize: 11, fontWeight: 600, border: "1px solid " + couleur + "30" }}> {m} <button onClick={() => setMarches(ms => ms.filter(x => x !== m))} style={{ background: "none", border: "none", color: couleur, cursor: "pointer", padding: 0, fontSize: 13, lineHeight: 1, marginLeft: 2, opacity: 0.5 }}>×</button> </span>; })} <button onClick={() => setMarches([])} style={{ fontSize: 10, color: C.red, background: "none", border: "none", cursor: "pointer", padding: "4px 6px", fontFamily: "inherit", fontWeight: 500 }}>Tout effacer</button> </div>} </div>], ["Montant (€)", <div> <input type="number" value={montant} onChange={e => setMontant(e.target.value)} placeholder="Ex : 50 000" style={inp} /> {montant && !isNaN(parseFloat(montant)) && <div style={{
                     marginTop: 7,
                     display: "flex",
                     gap: 3,
