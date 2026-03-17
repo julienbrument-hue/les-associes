@@ -1701,8 +1701,8 @@ export default function App() {
     return "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(parts.join(""))));
   }
   const C = {
-    bg: "#f2f4f7",
-    bgSub: "#e8eaee",
+    bg: "#ffffff",
+    bgSub: "#f8f9fa",
     bgCard: "#ffffff",
     bgCardHover: "#fafbfc",
     navy: "#0c1c35",
@@ -1712,7 +1712,7 @@ export default function App() {
     goldL: "#d4b84a",
     goldXL: "#fdf9ed",
     goldDim: "#a07e20",
-    border: "rgba(12,28,53,0.08)",
+    border: "rgba(12,28,53,0.06)",
     borderGold: "rgba(201,162,39,0.22)",
     text: "#0c1c35",
     textMid: "#2d3f5c",
@@ -1721,9 +1721,9 @@ export default function App() {
     greenBg: "#edfaf3",
     red: "#8b1a1a",
     redBg: "#fef1f1",
-    shadow: "0 1px 3px rgba(12,28,53,0.05), 0 4px 16px rgba(12,28,53,0.04)",
-    shadowMd: "0 2px 8px rgba(12,28,53,0.07), 0 8px 24px rgba(12,28,53,0.05)",
-    shadowLg: "0 8px 32px rgba(12,28,53,0.12), 0 2px 8px rgba(12,28,53,0.06)",
+    shadow: "0 1px 2px rgba(12,28,53,0.03), 0 4px 12px rgba(12,28,53,0.03)",
+    shadowMd: "0 2px 6px rgba(12,28,53,0.04), 0 8px 24px rgba(12,28,53,0.04)",
+    shadowLg: "0 4px 20px rgba(12,28,53,0.08), 0 1px 4px rgba(12,28,53,0.04)",
     glow: "0 0 0 3px rgba(201,162,39,0.15)"
   };
   const RC = {
@@ -2308,18 +2308,18 @@ export default function App() {
     label: "Import CSV"
   }];
   return <div style={{
-    background: "#f2f4f7",
+    background: "#ffffff",
     minHeight: "100vh",
     fontFamily: "'Inter',system-ui,sans-serif",
     color: C.text
-  }}> <style>{` @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap'); @keyframes spin{to{transform:rotate(360deg)}} @keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}} @keyframes slideIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:none}} .fu{animation:fadeUp .3s cubic-bezier(.22,1,.36,1) both} .fu1{animation:fadeUp .3s .05s cubic-bezier(.22,1,.36,1) both} .fu2{animation:fadeUp .3s .1s cubic-bezier(.22,1,.36,1) both} .fu3{animation:fadeUp .3s .15s cubic-bezier(.22,1,.36,1) both} .spin{animation:spin .6s linear infinite} button{transition:all .15s} button:hover{opacity:.88;transform:translateY(-1px)} input::placeholder{color:#9ca3af} select option{background:#fff;color:#0c1c35} ::-webkit-scrollbar{width:4px;height:4px} ::-webkit-scrollbar-track{background:transparent} ::-webkit-scrollbar-thumb{background:rgba(201,162,39,.3);border-radius:2px} .hov:hover{background:#ffffff!important;box-shadow:0 2px 12px rgba(12,28,53,0.08)!important} input:focus{border-color:rgba(201,162,39,0.5)!important;box-shadow:0 0 0 3px rgba(201,162,39,0.1)!important} `}</style> {} <div style={{
+  }}> <style>{` @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap'); @keyframes spin{to{transform:rotate(360deg)}} @keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}} @keyframes slideIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:none}} .fu{animation:fadeUp .3s cubic-bezier(.22,1,.36,1) both} .fu1{animation:fadeUp .3s .05s cubic-bezier(.22,1,.36,1) both} .fu2{animation:fadeUp .3s .1s cubic-bezier(.22,1,.36,1) both} .fu3{animation:fadeUp .3s .15s cubic-bezier(.22,1,.36,1) both} .spin{animation:spin .6s linear infinite} button{transition:all .15s} button:hover{opacity:.88;transform:translateY(-1px)} input::placeholder{color:#9ca3af} select option{background:#fff;color:#0c1c35} ::-webkit-scrollbar{width:4px;height:4px} ::-webkit-scrollbar-track{background:transparent} ::-webkit-scrollbar-thumb{background:rgba(12,28,53,.12);border-radius:2px} .hov:hover{background:#f8f9fa!important;box-shadow:0 2px 12px rgba(12,28,53,0.08)!important} input:focus{border-color:rgba(201,162,39,0.5)!important;box-shadow:0 0 0 3px rgba(201,162,39,0.1)!important} `}</style> {} <div style={{
       display: "flex",
       minHeight: "100vh",
       alignItems: "stretch"
     }}> {} <div style={{
         width: 220,
         flexShrink: 0,
-        background: "linear-gradient(160deg,#0c1c35 0%,#0f2340 100%)",
+        background: "linear-gradient(160deg,#0e1f3d 0%,#132d54 100%)",
         display: "flex",
         flexDirection: "column",
         position: "sticky",
@@ -2327,7 +2327,7 @@ export default function App() {
         height: "100vh",
         overflowY: "auto",
         zIndex: 100,
-        borderRight: "1px solid rgba(255,255,255,0.05)"
+        borderRight: "1px solid rgba(12,28,53,0.06)"
       }}> {} <div style={{
           padding: "24px 20px 20px",
           borderBottom: "1px solid rgba(255,255,255,0.07)"
@@ -2450,7 +2450,7 @@ export default function App() {
         minWidth: 0,
         padding: "32px 36px 64px",
         overflowX: "hidden",
-        background: "#f2f4f7"
+        background: "#ffffff"
       }}> {} {tab === "allocation" && <div className="fu"> {} <div style={{
             marginBottom: 24
           }}> <h1 style={{
