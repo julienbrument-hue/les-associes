@@ -1219,6 +1219,14 @@ export default function App() {
   const [showPinModal, setShowPinModal] = useState(false);
   const [classifyResults, setClassifyResults] = useState(null);
   const [classifyProgress, setClassifyProgress] = useState(0);
+  const [savedPortfolios, setSavedPortfolios] = useState(() => {
+    try { const s = localStorage.getItem("les_associes_portfolios"); return s ? JSON.parse(s) : []; } catch(e) { return []; }
+  });
+  const [portfolioName, setPortfolioName] = useState("");
+  const [alertThresholds, setAlertThresholds] = useState(() => {
+    try { const s = localStorage.getItem("les_associes_alerts"); return s ? JSON.parse(s) : {}; } catch(e) { return {}; }
+  });
+  const [marketAlerts, setMarketAlerts] = useState([]);
   const fileRef = useRef();
   const allCompagnies = function () {
     const s = {};
@@ -1240,6 +1248,40 @@ export default function App() {
       } catch (e) {}
     })();
   }, []);
+  useEffect(() => {
+    if (Object.keys(alertThresholds).length === 0) return;
+    async function checkMarketAlerts() {
+      try {
+        const majorIndices = ['^GSPC', '^FCHI', '^GDAXI'];
+        const res = await fetch('/api/fmp?path=/api/v3/quote/' + encodeURIComponent(majorIndices.join(',')));
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!Array.isArray(data)) return;
+        const alerts = [];
+        const names = { '^GSPC': 'S&P 500', '^FCHI': 'CAC 40', '^GDAXI': 'DAX' };
+        data.forEach(q => {
+          Object.entries(alertThresholds).forEach(([portfolioId, threshold]) => {
+            if (q.changesPercentage <= -Math.abs(threshold)) {
+              const portfolio = savedPortfolios.find(p => p.id === portfolioId);
+              if (portfolio) {
+                alerts.push({
+                  portfolioId,
+                  portfolioName: portfolio.name,
+                  index: names[q.symbol] || q.symbol,
+                  change: q.changesPercentage,
+                  threshold
+                });
+              }
+            }
+          });
+        });
+        setMarketAlerts(alerts);
+      } catch(e) {}
+    }
+    checkMarketAlerts();
+    const interval = setInterval(checkMarketAlerts, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [alertThresholds, savedPortfolios]);
   function handleFile(e) {
     const file = e.target.files[0];
     if (!file) return;
@@ -2359,6 +2401,53 @@ export default function App() {
     if (rechFilterMarche) f = f.filter(x => x.marche === rechFilterMarche);
     return f.slice().sort((a, b) => rechSort === "sri" ? a.sri - b.sri : rechSort === "sriDesc" ? b.sri - a.sri : rechSort === "marche" ? (a.marche || "").localeCompare(b.marche || "") : a.nom.localeCompare(b.nom));
   })();
+  function savePortfolio(name) {
+    if (!name.trim() || !results || !results.alloc || !results.alloc.length) return;
+    const portfolio = {
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2,6),
+      name: name.trim(),
+      date: new Date().toISOString(),
+      sri,
+      duree,
+      compagnie,
+      montant: montant ? parseFloat(montant) : null,
+      marches: [...marches],
+      alloc: results.alloc.map(f => ({ nom: f.nom, isin: f.isin, soc: f.soc, sri: f.sri, marche: f.marche, pct: f.pct })),
+      allocMode
+    };
+    const updated = [...savedPortfolios, portfolio];
+    setSavedPortfolios(updated);
+    localStorage.setItem("les_associes_portfolios", JSON.stringify(updated));
+    setPortfolioName("");
+  }
+  function deletePortfolio(id) {
+    const updated = savedPortfolios.filter(p => p.id !== id);
+    setSavedPortfolios(updated);
+    localStorage.setItem("les_associes_portfolios", JSON.stringify(updated));
+    const newAlerts = { ...alertThresholds };
+    delete newAlerts[id];
+    setAlertThresholds(newAlerts);
+    localStorage.setItem("les_associes_alerts", JSON.stringify(newAlerts));
+  }
+  function setAlertForPortfolio(portfolioId, threshold) {
+    const updated = { ...alertThresholds, [portfolioId]: threshold };
+    setAlertThresholds(updated);
+    localStorage.setItem("les_associes_alerts", JSON.stringify(updated));
+  }
+  function removeAlertForPortfolio(portfolioId) {
+    const updated = { ...alertThresholds };
+    delete updated[portfolioId];
+    setAlertThresholds(updated);
+    localStorage.setItem("les_associes_alerts", JSON.stringify(updated));
+  }
+  function loadPortfolio(p) {
+    setSri(p.sri);
+    setDuree(p.duree);
+    if (p.compagnie) setCompagnie(p.compagnie);
+    if (p.montant) setMontant(p.montant.toString());
+    if (p.marches) setMarches(p.marches);
+    setTab("allocation");
+  }
   const TABS = [{
     k: "allocation",
     icon: "⚖",
@@ -2375,6 +2464,10 @@ export default function App() {
     k: "fonds",
     icon: "≡",
     label: `Fonds (${funds.length})`
+  }, {
+    k: "portefeuille",
+    icon: "♥",
+    label: "Mon portefeuille"
   }, {
     k: "import",
     icon: "↑",
@@ -5089,7 +5182,24 @@ export default function App() {
                       color: C.red,
                       fontSize: 13
                     }}>🗑</button> </div> </div>;
-              })} </div> {fondsFiche && <FicheFond f={fondsFiche} onClose={() => setFondsFiche(null)} getPts={getFondPerf} />} </div> </div>} {} {tab === "import" && <div className="fu" style={{
+              })} </div> {fondsFiche && <FicheFond f={fondsFiche} onClose={() => setFondsFiche(null)} getPts={getFondPerf} />} </div> </div>} {} {tab === "portefeuille" && <div className="fu"> <div style={{ marginBottom: 24 }}> <h1 style={{ fontSize: 28, fontWeight: 800, color: C.navy, margin: 0, letterSpacing: -.5, fontFamily: "'Inter',system-ui,sans-serif", textTransform: "uppercase" }}>MON PORTEFEUILLE</h1> <div style={{ fontSize: 12, color: C.textDim, marginTop: 4, fontWeight: 400 }}>Gérez vos portefeuilles favoris et alertes de marché</div> </div>
+
+{marketAlerts.length > 0 && <div style={{ ...card, padding: 16, marginBottom: 20, border: "1px solid rgba(239,68,68,0.3)", background: "linear-gradient(135deg, #fef2f2, #fff5f5)" }}> <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}> <span style={{ fontSize: 18 }}>🚨</span> <span style={{ fontSize: 14, fontWeight: 800, color: "#991b1b" }}>Alertes de marché actives</span> </div> {marketAlerts.map((a, i) => <div key={i} style={{ padding: "8px 12px", borderRadius: 8, background: "#fff", border: "1px solid rgba(239,68,68,0.15)", marginBottom: 6, fontSize: 12, color: "#991b1b", display: "flex", alignItems: "center", gap: 8 }}> <span style={{ fontWeight: 700 }}>{a.index}</span> <span style={{ color: "#ef4444", fontWeight: 800 }}>▼ {Math.abs(a.change).toFixed(2)}%</span> <span style={{ color: "#6b7280" }}>•</span> <span>Seuil de -{Math.abs(a.threshold)}% atteint pour <strong>{a.portfolioName}</strong></span> </div>)} </div>}
+
+{results && results.alloc && results.alloc.length > 0 && <div style={{ ...card, padding: 20, marginBottom: 20 }}> <div style={{ fontSize: 14, fontWeight: 800, color: C.navy, marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}> <span style={{ fontSize: 16 }}>💾</span> Sauvegarder l'allocation en cours </div> <div style={{ display: "flex", gap: 8 }}> <input value={portfolioName} onChange={e => setPortfolioName(e.target.value)} placeholder="Nom du portefeuille (ex: Client Dupont - Prudent)" style={{ ...inp, flex: 1 }} onKeyDown={e => { if (e.key === "Enter" && portfolioName.trim()) savePortfolio(portfolioName); }} /> <button onClick={() => savePortfolio(portfolioName)} disabled={!portfolioName.trim()} style={{ padding: "10px 24px", borderRadius: 10, border: "none", background: portfolioName.trim() ? "linear-gradient(135deg," + C.navy + "," + C.navyL + ")" : C.bgSub, color: portfolioName.trim() ? C.gold : C.textDim, fontWeight: 800, fontSize: 13, cursor: portfolioName.trim() ? "pointer" : "default", fontFamily: "inherit", whiteSpace: "nowrap" }}>Enregistrer ♥</button> </div> <div style={{ fontSize: 11, color: C.textDim, marginTop: 6 }}>{results.alloc.length} fonds · SRI moyen {(results.alloc.reduce((s, f) => s + f.sri * f.pct, 0) / 100).toFixed(1)} · {allocMode === "auto" ? "Automatique" : "Manuel"}</div> </div>}
+
+{(!results || !results.alloc || !results.alloc.length) && savedPortfolios.length === 0 && <div style={{ ...card, padding: 40, textAlign: "center" }}> <div style={{ fontSize: 48, marginBottom: 12 }}>📁</div> <div style={{ fontSize: 16, fontWeight: 700, color: C.navy, marginBottom: 6 }}>Aucun portefeuille enregistré</div> <div style={{ fontSize: 13, color: C.textDim, marginBottom: 16 }}>Créez une allocation dans l'onglet Allocation puis revenez ici pour l'enregistrer</div> <button onClick={() => setTab("allocation")} style={{ padding: "10px 24px", borderRadius: 10, border: "none", background: "linear-gradient(135deg," + C.navy + "," + C.navyL + ")", color: C.gold, fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>Aller à l'allocation</button> </div>}
+
+{savedPortfolios.length > 0 && <div> <div style={{ fontSize: 14, fontWeight: 800, color: C.navy, marginBottom: 14, display: "flex", alignItems: "center", gap: 8 }}> <span style={{ fontSize: 16 }}>♥</span> Portefeuilles favoris <span style={{ fontSize: 11, fontWeight: 500, color: C.textDim, marginLeft: 4 }}>({savedPortfolios.length})</span> </div> <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(360px, 1fr))", gap: 16 }}> {savedPortfolios.map(p => { const avgSri = p.alloc.length ? (p.alloc.reduce((s, f) => s + f.sri * f.pct, 0) / 100).toFixed(1) : "—"; const hasAlert = alertThresholds[p.id] !== undefined; return <div key={p.id} style={{ ...card, padding: 0, overflow: "hidden", transition: "box-shadow .2s", position: "relative" }} className="hov">
+<div style={{ padding: "16px 18px", background: "linear-gradient(135deg," + C.navy + "," + C.navyL + ")", color: "#fff", position: "relative" }}> <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}> <div> <div style={{ fontSize: 15, fontWeight: 800, color: C.gold, marginBottom: 3 }}>{p.name}</div> <div style={{ fontSize: 10, color: "rgba(255,255,255,0.5)" }}>{new Date(p.date).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}</div> </div> <div style={{ display: "flex", gap: 4 }}> {hasAlert && <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 12, background: "rgba(239,68,68,0.2)", color: "#fca5a5", fontWeight: 700, border: "1px solid rgba(239,68,68,0.3)" }}>🔔 -{Math.abs(alertThresholds[p.id])}%</span>} </div> </div> <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}> <span style={{ padding: "3px 10px", borderRadius: 20, background: "rgba(201,162,39,0.2)", color: C.gold, fontSize: 10, fontWeight: 700 }}>SRI {p.sri} · {RLABEL[p.sri]}</span> <span style={{ padding: "3px 10px", borderRadius: 20, background: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)", fontSize: 10, fontWeight: 600 }}>{p.alloc.length} fonds</span> <span style={{ padding: "3px 10px", borderRadius: 20, background: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)", fontSize: 10, fontWeight: 600 }}>SRI moy. {avgSri}</span> {p.montant && <span style={{ padding: "3px 10px", borderRadius: 20, background: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)", fontSize: 10, fontWeight: 600 }}>{p.montant.toLocaleString("fr-FR")} €</span>} </div> </div>
+
+<div style={{ padding: "12px 18px" }}> {p.alloc.slice(0, 5).map((f, i) => <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "6px 0", borderBottom: i < Math.min(p.alloc.length, 5) - 1 ? "1px solid " + C.border : "none" }}> <div style={{ display: "flex", alignItems: "center", gap: 8, flex: 1, minWidth: 0 }}> <div style={{ width: 8, height: 8, borderRadius: 2, background: PALETTE[i % PALETTE.length], flexShrink: 0 }} /> <span style={{ fontSize: 12, fontWeight: 500, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.nom}</span> </div> <span style={{ fontSize: 12, fontWeight: 800, color: C.gold, flexShrink: 0, marginLeft: 8 }}>{f.pct}%</span> </div>)} {p.alloc.length > 5 && <div style={{ fontSize: 11, color: C.textDim, textAlign: "center", padding: "6px 0" }}>+ {p.alloc.length - 5} autres fonds</div>} </div>
+
+<div style={{ padding: "0 18px 12px" }}> <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}> <span style={{ fontSize: 12 }}>🔔</span> <span style={{ fontSize: 11, fontWeight: 700, color: C.navy }}>Alerte baisse de marché</span> </div> <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}> {[-2, -3, -5, -10].map(t => { const active = alertThresholds[p.id] === Math.abs(t); return <button key={t} onClick={() => active ? removeAlertForPortfolio(p.id) : setAlertForPortfolio(p.id, Math.abs(t))} style={{ padding: "5px 12px", borderRadius: 8, border: "1px solid " + (active ? "rgba(239,68,68,0.4)" : C.borderGold), background: active ? "rgba(239,68,68,0.08)" : C.bgSub, color: active ? "#dc2626" : C.textDim, fontSize: 11, fontWeight: active ? 700 : 500, cursor: "pointer", fontFamily: "inherit", transition: "all .15s" }}>{t}%</button>; })} {hasAlert && <button onClick={() => removeAlertForPortfolio(p.id)} style={{ padding: "5px 10px", borderRadius: 8, border: "none", background: "none", color: C.textDim, fontSize: 10, cursor: "pointer", fontFamily: "inherit" }}>Désactiver</button>} </div> </div>
+
+<div style={{ padding: "0 18px 16px", display: "flex", gap: 8 }}> <button onClick={() => loadPortfolio(p)} style={{ flex: 1, padding: "9px", borderRadius: 8, border: "none", background: "linear-gradient(135deg," + C.gold + "," + C.goldL + ")", color: C.navy, fontWeight: 800, fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>Charger</button> <button onClick={() => { if (confirm("Supprimer « " + p.name + " » ?")) deletePortfolio(p.id); }} style={{ padding: "9px 16px", borderRadius: 8, border: "1px solid rgba(153,27,27,0.2)", background: "rgba(153,27,27,0.04)", color: C.red, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Supprimer</button> </div> </div>; })} </div> </div>}
+
+</div>} {tab === "import" && <div className="fu" style={{
           maxWidth: 600
         }}> <div style={{
             marginBottom: 24
