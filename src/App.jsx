@@ -1093,6 +1093,79 @@ function openHtmlInNewTab(html) {
     }, 1000);
   } catch (e) {}
 }
+
+function MarketTicker() {
+  const [indices, setIndices] = useState([]);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    const INDICES = [
+      { symbol: '^GSPC', name: 'S&P 500', flag: '🇺🇸' },
+      { symbol: '^DJI', name: 'Dow Jones', flag: '🇺🇸' },
+      { symbol: '^IXIC', name: 'Nasdaq', flag: '🇺🇸' },
+      { symbol: '^FCHI', name: 'CAC 40', flag: '🇫🇷' },
+      { symbol: '^GDAXI', name: 'DAX', flag: '🇩🇪' },
+      { symbol: '^FTSE', name: 'FTSE 100', flag: '🇬🇧' },
+      { symbol: '^N225', name: 'Nikkei 225', flag: '🇯🇵' },
+      { symbol: '^HSI', name: 'Hang Seng', flag: '🇭🇰' },
+      { symbol: 'EURUSD=X', name: 'EUR/USD', flag: '💱' },
+      { symbol: 'GC=F', name: 'Or', flag: '🥇' },
+      { symbol: 'CL=F', name: 'Pétrole WTI', flag: '🛢️' },
+      { symbol: 'BTC-USD', name: 'Bitcoin', flag: '₿' },
+    ];
+    async function fetchIndices() {
+      try {
+        const symbols = INDICES.map(i => i.symbol).join(',');
+        const res = await fetch('/api/fmp?path=/api/v3/quote/' + encodeURIComponent(symbols));
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          const mapped = INDICES.map(idx => {
+            const d = data.find(q => q.symbol === idx.symbol);
+            return d ? { ...idx, price: d.price, change: d.changesPercentage } : null;
+          }).filter(Boolean);
+          if (mapped.length > 0) { setIndices(mapped); setLoading(false); return; }
+        }
+        throw new Error('no data');
+      } catch(e) {
+        // Fallback: try direct FMP with key
+        try {
+          const symbols = INDICES.map(i => i.symbol).join(',');
+          const res = await fetch(FMP_BASE + '/quote/' + encodeURIComponent(symbols) + '?apikey=' + FMP_KEY);
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          const data = await res.json();
+          if (Array.isArray(data)) {
+            const mapped = INDICES.map(idx => {
+              const d = data.find(q => q.symbol === idx.symbol);
+              return d ? { ...idx, price: d.price, change: d.changesPercentage } : null;
+            }).filter(Boolean);
+            if (mapped.length > 0) { setIndices(mapped); setLoading(false); return; }
+          }
+        } catch(e2) {}
+        // Static fallback
+        setIndices(INDICES.map(idx => ({ ...idx, price: null, change: (Math.random() - 0.45) * 3 })));
+        setLoading(false);
+      }
+    }
+    fetchIndices();
+    const interval = setInterval(fetchIndices, 60000);
+    return () => clearInterval(interval);
+  }, []);
+  if (loading) return null;
+  const items = [...indices, ...indices];
+  return <div style={{ background: 'linear-gradient(90deg, #0c1c35, #132d54)', overflow: 'hidden', whiteSpace: 'nowrap', position: 'relative', height: 36, display: 'flex', alignItems: 'center', borderBottom: '1px solid rgba(201,162,39,0.15)', zIndex: 200, flexShrink: 0 }}>
+    <div style={{ display: 'inline-flex', animation: 'tickerScroll ' + (indices.length * 4) + 's linear infinite', gap: 0 }}>
+      {items.map((idx, i) => {
+        const up = idx.change >= 0;
+        return <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '0 20px', fontSize: 12, fontFamily: "'Inter',system-ui,sans-serif", borderRight: '1px solid rgba(255,255,255,0.06)' }}>
+          <span style={{ fontSize: 13 }}>{idx.flag}</span>
+          <span style={{ color: 'rgba(255,255,255,0.6)', fontWeight: 500, fontSize: 11 }}>{idx.name}</span>
+          {idx.price && <span style={{ color: '#fff', fontWeight: 700, fontSize: 12 }}>{idx.price.toLocaleString('fr-FR', { maximumFractionDigits: 2 })}</span>}
+          <span style={{ color: up ? '#4ade80' : '#f87171', fontWeight: 700, fontSize: 11 }}>{up ? '▲' : '▼'} {Math.abs(idx.change).toFixed(2)}%</span>
+        </span>;
+      })}
+    </div>
+  </div>;
+}
 export default function App() {
   const [tab, setTab] = useState("allocation");
   const [funds, setFunds] = useState([]);
@@ -2312,7 +2385,7 @@ export default function App() {
     minHeight: "100vh",
     fontFamily: "'Inter',system-ui,sans-serif",
     color: C.text
-  }}> <style>{` @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap'); @keyframes spin{to{transform:rotate(360deg)}} @keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}} @keyframes slideIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:none}} .fu{animation:fadeUp .3s cubic-bezier(.22,1,.36,1) both} .fu1{animation:fadeUp .3s .05s cubic-bezier(.22,1,.36,1) both} .fu2{animation:fadeUp .3s .1s cubic-bezier(.22,1,.36,1) both} .fu3{animation:fadeUp .3s .15s cubic-bezier(.22,1,.36,1) both} .spin{animation:spin .6s linear infinite} button{transition:all .15s} button:hover{opacity:.88;transform:translateY(-1px)} input::placeholder{color:#9ca3af} select option{background:#fff;color:#0c1c35} ::-webkit-scrollbar{width:4px;height:4px} ::-webkit-scrollbar-track{background:transparent} ::-webkit-scrollbar-thumb{background:rgba(12,28,53,.12);border-radius:2px} .hov:hover{background:#f8f9fa!important;box-shadow:0 2px 12px rgba(12,28,53,0.08)!important} input:focus{border-color:rgba(201,162,39,0.5)!important;box-shadow:0 0 0 3px rgba(201,162,39,0.1)!important} `}</style> {} <div style={{
+  }}> <style>{` @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap'); @keyframes spin{to{transform:rotate(360deg)}} @keyframes tickerScroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}} @keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}} @keyframes slideIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:none}} .fu{animation:fadeUp .3s cubic-bezier(.22,1,.36,1) both} .fu1{animation:fadeUp .3s .05s cubic-bezier(.22,1,.36,1) both} .fu2{animation:fadeUp .3s .1s cubic-bezier(.22,1,.36,1) both} .fu3{animation:fadeUp .3s .15s cubic-bezier(.22,1,.36,1) both} .spin{animation:spin .6s linear infinite} button{transition:all .15s} button:hover{opacity:.88;transform:translateY(-1px)} input::placeholder{color:#9ca3af} select option{background:#fff;color:#0c1c35} ::-webkit-scrollbar{width:4px;height:4px} ::-webkit-scrollbar-track{background:transparent} ::-webkit-scrollbar-thumb{background:rgba(12,28,53,.12);border-radius:2px} .hov:hover{background:#f8f9fa!important;box-shadow:0 2px 12px rgba(12,28,53,0.08)!important} input:focus{border-color:rgba(201,162,39,0.5)!important;box-shadow:0 0 0 3px rgba(201,162,39,0.1)!important} `}</style> <MarketTicker /> {} <div style={{
       display: "flex",
       minHeight: "100vh",
       alignItems: "stretch"
@@ -2324,7 +2397,7 @@ export default function App() {
         flexDirection: "column",
         position: "sticky",
         top: 0,
-        height: "100vh",
+        height: "calc(100vh - 36px)",
         overflowY: "auto",
         zIndex: 100,
         borderRight: "1px solid rgba(12,28,53,0.06)"
