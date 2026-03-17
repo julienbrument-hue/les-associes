@@ -463,7 +463,7 @@ async function fetchFMPPerf(isin) {
   try {
     const endYear = new Date().getFullYear() - 1;
     const startYear = endYear - 9;
-    const url = FMP_BASE + "/historical-price-full/" + encodeURIComponent(isin) + "?from=" + startYear + "-01-01" + "&to=" + endYear + "-12-31" + "&apikey=" + FMP_KEY;
+    const url = "/api/fmp?path=/api/v3/historical-price-full/" + encodeURIComponent(isin) + "&from=" + startYear + "-01-01" + "&to=" + endYear + "-12-31";
     const res = await fetch(url);
     if (!res.ok) return null;
     const json = await res.json();
