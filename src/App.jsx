@@ -1228,6 +1228,13 @@ export default function App() {
   const [news, setNews] = useState([]);
   const [newsLoading, setNewsLoading] = useState(true);
   const [newsCategory, setNewsCategory] = useState("all");
+const [ucsProducts, setUcsProducts] = useState(() => {
+  try { const s = localStorage.getItem("les_associes_ucs"); return s ? JSON.parse(s) : []; } catch(e) { return []; }
+});
+const [ucsSelected, setUcsSelected] = useState(null);
+const [ucsForm, setUcsForm] = useState(null);
+const [ucsHistoLoading, setUcsHistoLoading] = useState(false);
+const [ucsHistoData, setUcsHistoData] = useState(null);
   const [buildSearch, setBuildSearch] = useState("");
   const [addToPortfolioFund, setAddToPortfolioFund] = useState(null);
   const [alertThresholds, setAlertThresholds] = useState(() => {
@@ -2459,6 +2466,104 @@ export default function App() {
     localStorage.setItem("les_associes_portfolios", JSON.stringify(updated));
     setPortfolioName("");
   }
+  function saveUcsProduct(product) {
+    const updated = ucsProducts.some(p => p.id === product.id)
+      ? ucsProducts.map(p => p.id === product.id ? product : p)
+      : [...ucsProducts, { ...product, id: product.id || Date.now().toString(36) + Math.random().toString(36).slice(2,6) }];
+    setUcsProducts(updated);
+    localStorage.setItem("les_associes_ucs", JSON.stringify(updated));
+    setUcsForm(null);
+  }
+  function deleteUcsProduct(id) {
+    const updated = ucsProducts.filter(p => p.id !== id);
+    setUcsProducts(updated);
+    localStorage.setItem("les_associes_ucs", JSON.stringify(updated));
+    if (ucsSelected && ucsSelected.id === id) setUcsSelected(null);
+  }
+  async function fetchUcsHisto(symbol) {
+    if (!symbol) return;
+    setUcsHistoLoading(true);
+    setUcsHistoData(null);
+    try {
+      const endYear = new Date().getFullYear();
+      const startYear = endYear - 2;
+      const res = await fetch('/api/fmp?path=/stable/historical-price-eod/full&symbol=' + encodeURIComponent(symbol) + '&from=' + startYear + '-01-01&to=' + endYear + '-12-31');
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          setUcsHistoData(data.sort((a, b) => a.date.localeCompare(b.date)));
+        }
+      }
+    } catch(e) {}
+    setUcsHistoLoading(false);
+  }
+  function exportUcsPDF(product, histoData) {
+    const pts = histoData || [];
+    const lastPrice = pts.length > 0 ? pts[pts.length - 1].close : null;
+    const firstPrice = pts.length > 0 ? pts[0].close : null;
+    const perf = firstPrice && lastPrice ? ((lastPrice / firstPrice - 1) * 100).toFixed(2) : "N/A";
+    const maxPrice = pts.length > 0 ? Math.max(...pts.map(p => p.close || p.high || 0)) : null;
+    const minPrice = pts.length > 0 ? Math.min(...pts.map(p => p.close || p.low || 999999)) : null;
+
+    const histoRows = pts.filter((_, i) => i % Math.max(1, Math.floor(pts.length / 24)) === 0 || i === pts.length - 1)
+      .map(p => "<tr style='border-bottom:1px solid #f0ece0'><td style='padding:6px 10px;font-size:11px'>" + p.date + "</td><td style='padding:6px 10px;text-align:right;font-weight:600;font-size:11px'>" + (p.close || 0).toFixed(2) + "</td><td style='padding:6px 10px;text-align:right;font-size:11px'>" + (p.high || 0).toFixed(2) + "</td><td style='padding:6px 10px;text-align:right;font-size:11px'>" + (p.low || 0).toFixed(2) + "</td><td style='padding:6px 10px;text-align:right;font-size:11px'>" + ((p.volume || 0) / 1000).toFixed(0) + "K</td></tr>")
+      .join("");
+
+    const html = "<!DOCTYPE html><html><head><meta charset='UTF-8'><title>UCS - " + product.nom + "</title>" +
+      "<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Segoe UI',system-ui,sans-serif;background:#fff;color:#081225}" +
+      ".wrap{max-width:900px;margin:0 auto;padding:28px}" +
+      ".card{background:#fff;border-radius:12px;padding:24px;margin-bottom:16px;box-shadow:0 2px 16px rgba(8,18,37,.06);border:1px solid rgba(201,162,39,.15)}" +
+      ".hdr{background:linear-gradient(135deg,#081225,#0e2040);border-radius:14px;padding:26px 30px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center}" +
+      ".logo{font-family:Georgia,serif;font-size:22px;font-weight:700;color:#c9a227}" +
+      ".stitle{font-size:14px;font-weight:700;color:#081225;margin-bottom:14px;padding-left:10px;border-left:3px solid #c9a227}" +
+      ".grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}" +
+      ".stat{padding:14px;border-radius:10px;background:#f8f9fa;border:1px solid rgba(201,162,39,.12)}" +
+      ".stat-label{font-size:9px;font-weight:700;color:#8292a8;text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px}" +
+      ".stat-val{font-size:16px;font-weight:800;color:#081225}" +
+      "table{width:100%;border-collapse:collapse}th{padding:8px;font-size:9px;font-weight:700;color:#8292a8;text-transform:uppercase;border-bottom:2px solid rgba(201,162,39,.2);text-align:right;background:#f8f9fa}th:first-child{text-align:left}" +
+      ".footer{text-align:center;font-size:10px;color:#8292a8;padding:16px 0 8px;border-top:1px solid rgba(201,162,39,.2);margin-top:8px}" +
+      "@media print{body{background:#fff}.card{box-shadow:none;page-break-inside:avoid}}</style></head>" +
+      "<body><div class='wrap'>" +
+      "<div class='hdr'><div><div class='logo'>Les Associ\u00e9s</div><div style='font-size:10px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.4);margin-top:4px'>Reporting UCS \u00b7 Unit\u00e9 de Compte Structur\u00e9e</div></div>" +
+      "<div style='text-align:right;color:rgba(255,255,255,.5);font-size:12px'>" + new Date().toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" }) + "</div></div>" +
+      "<div class='card'><div class='stitle'>\u25C6 Fiche produit</div>" +
+      "<div class='grid'>" +
+      "<div class='stat'><div class='stat-label'>Nom du produit</div><div class='stat-val'>" + product.nom + "</div></div>" +
+      "<div class='stat'><div class='stat-label'>\u00c9metteur</div><div class='stat-val'>" + (product.emetteur || "\u2014") + "</div></div>" +
+      "<div class='stat'><div class='stat-label'>Sous-jacent</div><div class='stat-val'>" + (product.sousjacent || "\u2014") + "</div></div>" +
+      "<div class='stat'><div class='stat-label'>ISIN</div><div class='stat-val' style='font-size:13px'>" + (product.isin || "\u2014") + "</div></div>" +
+      "<div class='stat'><div class='stat-label'>Date de lancement</div><div class='stat-val'>" + (product.dateLancement || "\u2014") + "</div></div>" +
+      "<div class='stat'><div class='stat-label'>Date d'\u00e9ch\u00e9ance</div><div class='stat-val'>" + (product.dateEcheance || "\u2014") + "</div></div>" +
+      "<div class='stat'><div class='stat-label'>Coupon / Rendement</div><div class='stat-val' style='color:#c9a227'>" + (product.coupon || "\u2014") + "</div></div>" +
+      "<div class='stat'><div class='stat-label'>Barri\u00e8re de protection</div><div class='stat-val'>" + (product.barriere || "\u2014") + "</div></div>" +
+      "<div class='stat'><div class='stat-label'>Fr\u00e9quence de constatation</div><div class='stat-val'>" + (product.frequence || "\u2014") + "</div></div>" +
+      "<div class='stat'><div class='stat-label'>Type de produit</div><div class='stat-val'>" + (product.type || "\u2014") + "</div></div>" +
+      "</div>" +
+      (product.description ? "<div style='margin-top:16px;padding:14px;background:#fff9ec;border-left:4px solid #c9a227;border-radius:0 10px 10px 0;font-size:12px;color:#081225;line-height:1.6'>" + product.description + "</div>" : "") +
+      "</div>" +
+      (lastPrice ? "<div class='card'><div class='stitle'>\uD83D\uDCCA Reporting \u2014 Valeur liquidative</div>" +
+      "<div class='grid' style='grid-template-columns:repeat(4,1fr)'>" +
+      "<div class='stat'><div class='stat-label'>Derni\u00e8re VL</div><div class='stat-val' style='color:#c9a227'>" + lastPrice.toFixed(2) + "</div></div>" +
+      "<div class='stat'><div class='stat-label'>Performance</div><div class='stat-val' style='color:" + (parseFloat(perf) >= 0 ? "#0a5c34" : "#8b1a1a") + "'>" + (parseFloat(perf) >= 0 ? "+" : "") + perf + "%</div></div>" +
+      "<div class='stat'><div class='stat-label'>Plus haut</div><div class='stat-val'>" + (maxPrice ? maxPrice.toFixed(2) : "\u2014") + "</div></div>" +
+      "<div class='stat'><div class='stat-label'>Plus bas</div><div class='stat-val'>" + (minPrice ? minPrice.toFixed(2) : "\u2014") + "</div></div>" +
+      "</div></div>" : "") +
+      (histoRows ? "<div class='card'><div class='stitle'>\uD83D\uDCC8 Historique des valeurs</div><table><thead><tr><th style='text-align:left'>Date</th><th>Cl\u00f4ture</th><th>Plus haut</th><th>Plus bas</th><th>Volume</th></tr></thead><tbody>" + histoRows + "</tbody></table></div>" : "") +
+      "<div style='background:#fffbeb;border:1px solid rgba(201,162,39,.25);border-radius:10px;padding:12px 16px;font-size:11px;color:#78350f;line-height:1.6'>\u26A0\uFE0F Ce document est fourni \u00e0 titre informatif uniquement. Les performances pass\u00e9es ne pr\u00e9jugent pas des performances futures. Document non contractuel.</div>" +
+      "<div class='footer'>Les Associ\u00e9s \u00b7 Reporting UCS \u00b7 www.les-associes.fr \u00b7 Document non contractuel</div>" +
+      "</div></body></html>";
+
+    try {
+      const blob = new Blob([html], { type: "text/html" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "UCS-" + product.nom.replace(/[^a-zA-Z0-9]/g, "-") + "-" + new Date().toISOString().slice(0, 10) + ".html";
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
+    } catch(e) {}
+  }
   function createEmptyPortfolio(name) {
     if (!name.trim()) return;
     setBuildingPortfolio({ name: name.trim(), alloc: [] });
@@ -2572,6 +2677,10 @@ export default function App() {
     k: "fonds",
     icon: "≡",
     label: `Fonds (${funds.length})`
+  }, {
+    k: "ucs",
+    icon: "◆",
+    label: "UCS"
   }, {
     k: "portefeuille",
     icon: "♥",
@@ -5381,7 +5490,214 @@ export default function App() {
                       color: C.red,
                       fontSize: 13
                     }}>🗑</button> </div> <button onClick={(e) => { e.stopPropagation(); setAddToPortfolioFund(f); }} style={{ position: "absolute", top: 8, right: 8, background: "none", border: "none", fontSize: 16, cursor: "pointer", color: C.gold, opacity: 0.6, padding: "2px" }} title="Ajouter à un portefeuille">2665</button> </div>;
-              })} </div> {fondsFiche && <FicheFond f={fondsFiche} onClose={() => setFondsFiche(null)} getPts={getFondPerf} />} </div> </div>} {} {tab === "portefeuille" && <div className="fu"> <div style={{ marginBottom: 24 }}> <h1 style={{ fontSize: 28, fontWeight: 800, color: C.navy, margin: 0, letterSpacing: -.5, fontFamily: "'Inter',system-ui,sans-serif", textTransform: "uppercase" }}>MON PORTEFEUILLE</h1> <div style={{ fontSize: 12, color: C.textDim, marginTop: 4, fontWeight: 400 }}>Gérez vos portefeuilles favoris et alertes de marché</div> </div>
+              })} </div> {fondsFiche && <FicheFond f={fondsFiche} onClose={() => setFondsFiche(null)} getPts={getFondPerf} />} </div> </div>} {} {tab === "ucs" && <div className="fu">
+  <div style={{ marginBottom: 24 }}>
+    <h1 style={{ fontSize: 28, fontWeight: 800, color: C.navy, margin: 0, letterSpacing: -.5, fontFamily: "'Inter',system-ui,sans-serif", textTransform: "uppercase" }}>UCS</h1>
+    <div style={{ fontSize: 12, color: C.textDim, marginTop: 4, fontWeight: 400 }}>Unités de Compte Structurées · Fiches produits & Reporting</div>
+  </div>
+
+  {/* Add / Edit form */}
+  <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>
+    <button onClick={() => setUcsForm({ id: "", nom: "", emetteur: "", sousjacent: "", soujacentSymbol: "", isin: "", dateLancement: "", dateEcheance: "", coupon: "", barriere: "", frequence: "Trimestrielle", type: "Autocall", description: "", valeurNominale: "1000" })} style={{ padding: "10px 24px", borderRadius: 10, border: "none", background: "linear-gradient(135deg," + C.navy + "," + C.navyL + ")", color: C.gold, fontWeight: 800, fontSize: 13, cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 8 }}>✚ Nouveau produit UCS</button>
+  </div>
+
+  {/* Form modal */}
+  {ucsForm && <div style={{ ...card, padding: 0, marginBottom: 20, overflow: "hidden" }}>
+    <div style={{ padding: "16px 20px", background: "linear-gradient(135deg," + C.navy + "," + C.navyL + ")" }}>
+      <div style={{ fontSize: 15, fontWeight: 800, color: C.gold }}>{ucsForm.id ? "Modifier le produit" : "Nouveau produit UCS"}</div>
+    </div>
+    <div style={{ padding: 20 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
+        {[
+          { key: "nom", label: "Nom du produit", placeholder: "Ex: Athéna CAC 40 Mars 2025" },
+          { key: "emetteur", label: "Émetteur", placeholder: "Ex: BNP Paribas, SG, Natixis..." },
+          { key: "sousjacent", label: "Sous-jacent", placeholder: "Ex: CAC 40, Euro Stoxx 50..." },
+          { key: "soujacentSymbol", label: "Symbole sous-jacent (FMP)", placeholder: "Ex: ^FCHI, ^STOXX50E, AAPL..." },
+          { key: "isin", label: "ISIN", placeholder: "Ex: FR0014..." },
+          { key: "type", label: "Type de produit", placeholder: "Autocall, Phoenix, Reverse..." },
+          { key: "dateLancement", label: "Date de lancement", placeholder: "JJ/MM/AAAA" },
+          { key: "dateEcheance", label: "Date d'échéance", placeholder: "JJ/MM/AAAA" },
+          { key: "coupon", label: "Coupon / Rendement", placeholder: "Ex: 8% par an, 2% trimestriel..." },
+          { key: "barriere", label: "Barrière de protection", placeholder: "Ex: -40%, 60% du strike..." },
+          { key: "frequence", label: "Fréquence de constatation", placeholder: "Trimestrielle, Semestrielle..." },
+          { key: "valeurNominale", label: "Valeur nominale (€)", placeholder: "1000" },
+        ].map(field => <div key={field.key}>
+          <div style={{ fontSize: 10, fontWeight: 700, color: C.textDim, textTransform: "uppercase", letterSpacing: .6, marginBottom: 4 }}>{field.label}</div>
+          <input value={ucsForm[field.key] || ""} onChange={e => setUcsForm(prev => ({ ...prev, [field.key]: e.target.value }))} placeholder={field.placeholder} style={inp} />
+        </div>)}
+      </div>
+      <div style={{ marginBottom: 12 }}>
+        <div style={{ fontSize: 10, fontWeight: 700, color: C.textDim, textTransform: "uppercase", letterSpacing: .6, marginBottom: 4 }}>Description / Mécanisme</div>
+        <textarea value={ucsForm.description || ""} onChange={e => setUcsForm(prev => ({ ...prev, description: e.target.value }))} placeholder="Décrivez le mécanisme du produit, conditions de rappel, protection du capital..." style={{ ...inp, height: 80, resize: "vertical" }} />
+      </div>
+      <div style={{ display: "flex", gap: 8 }}>
+        <button onClick={() => saveUcsProduct(ucsForm.id ? ucsForm : { ...ucsForm, id: Date.now().toString(36) + Math.random().toString(36).slice(2,6) })} disabled={!ucsForm.nom} style={{ flex: 1, padding: "12px", borderRadius: 10, border: "none", background: ucsForm.nom ? "linear-gradient(135deg," + C.navy + "," + C.navyL + ")" : C.bgSub, color: ucsForm.nom ? C.gold : C.textDim, fontWeight: 800, fontSize: 13, cursor: ucsForm.nom ? "pointer" : "default", fontFamily: "inherit" }}>Enregistrer</button>
+        <button onClick={() => setUcsForm(null)} style={{ padding: "12px 20px", borderRadius: 10, border: "1.5px solid " + C.borderGold, background: C.bgSub, color: C.textMid, cursor: "pointer", fontSize: 13, fontFamily: "inherit" }}>Annuler</button>
+      </div>
+    </div>
+  </div>}
+
+  {/* Products list */}
+  {ucsProducts.length === 0 && !ucsForm && <div style={{ ...card, padding: 40, textAlign: "center" }}>
+    <div style={{ fontSize: 48, marginBottom: 12 }}>◆</div>
+    <div style={{ fontSize: 16, fontWeight: 700, color: C.navy, marginBottom: 6 }}>Aucun produit UCS enregistré</div>
+    <div style={{ fontSize: 13, color: C.textDim }}>Ajoutez vos produits structurés pour suivre leur valorisation</div>
+  </div>}
+
+  {ucsProducts.length > 0 && !ucsSelected && <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 16 }}>
+    {ucsProducts.map(p => {
+      const isExpired = p.dateEcheance && (() => { const parts = p.dateEcheance.split("/"); if (parts.length === 3) { const d = new Date(parts[2], parts[1] - 1, parts[0]); return d < new Date(); } return false; })();
+      return <div key={p.id} style={{ ...card, padding: 0, overflow: "hidden", cursor: "pointer", transition: "box-shadow .2s" }} className="hov" onClick={() => { setUcsSelected(p); if (p.soujacentSymbol) fetchUcsHisto(p.soujacentSymbol); }}>
+        <div style={{ padding: "16px 18px", background: "linear-gradient(135deg," + C.navy + "," + C.navyL + ")", position: "relative" }}>
+          {isExpired && <span style={{ position: "absolute", top: 12, right: 12, padding: "2px 10px", borderRadius: 12, background: "rgba(239,68,68,0.2)", color: "#fca5a5", fontSize: 9, fontWeight: 700 }}>ÉCHU</span>}
+          <div style={{ fontSize: 14, fontWeight: 800, color: C.gold, marginBottom: 3 }}>{p.nom}</div>
+          <div style={{ fontSize: 10, color: "rgba(255,255,255,0.5)" }}>{p.emetteur || "—"} · {p.type || "Structuré"}</div>
+          <div style={{ display: "flex", gap: 6, marginTop: 10, flexWrap: "wrap" }}>
+            {p.sousjacent && <span style={{ padding: "3px 10px", borderRadius: 20, background: "rgba(201,162,39,0.2)", color: C.gold, fontSize: 10, fontWeight: 700 }}>{p.sousjacent}</span>}
+            {p.coupon && <span style={{ padding: "3px 10px", borderRadius: 20, background: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)", fontSize: 10, fontWeight: 600 }}>{p.coupon}</span>}
+            {p.barriere && <span style={{ padding: "3px 10px", borderRadius: 20, background: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)", fontSize: 10, fontWeight: 600 }}>Barrière: {p.barriere}</span>}
+          </div>
+        </div>
+        <div style={{ padding: "12px 18px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+          <div><div style={{ fontSize: 9, color: C.textDim, textTransform: "uppercase", letterSpacing: .6 }}>ISIN</div><div style={{ fontSize: 12, fontWeight: 600, color: C.text, marginTop: 2 }}>{p.isin || "—"}</div></div>
+          <div><div style={{ fontSize: 9, color: C.textDim, textTransform: "uppercase", letterSpacing: .6 }}>Échéance</div><div style={{ fontSize: 12, fontWeight: 600, color: C.text, marginTop: 2 }}>{p.dateEcheance || "—"}</div></div>
+          <div><div style={{ fontSize: 9, color: C.textDim, textTransform: "uppercase", letterSpacing: .6 }}>Fréquence</div><div style={{ fontSize: 12, fontWeight: 600, color: C.text, marginTop: 2 }}>{p.frequence || "—"}</div></div>
+          <div><div style={{ fontSize: 9, color: C.textDim, textTransform: "uppercase", letterSpacing: .6 }}>Nominal</div><div style={{ fontSize: 12, fontWeight: 600, color: C.text, marginTop: 2 }}>{p.valeurNominale ? parseFloat(p.valeurNominale).toLocaleString("fr-FR") + " €" : "—"}</div></div>
+        </div>
+      </div>;
+    })}
+  </div>}
+
+  {/* Selected product detail */}
+  {ucsSelected && <div>
+    <button onClick={() => { setUcsSelected(null); setUcsHistoData(null); }} style={{ marginBottom: 16, padding: "8px 18px", borderRadius: 8, border: "1px solid " + C.borderGold, background: C.bgCard, color: C.textMid, fontSize: 12, cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 6 }}>← Retour à la liste</button>
+
+    {/* Product header */}
+    <div style={{ ...card, padding: 0, overflow: "hidden", marginBottom: 16 }}>
+      <div style={{ padding: "24px 28px", background: "linear-gradient(135deg," + C.navy + "," + C.navyL + ")" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+          <div>
+            <div style={{ fontSize: 22, fontWeight: 800, color: C.gold, marginBottom: 4 }}>{ucsSelected.nom}</div>
+            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.5)" }}>{ucsSelected.emetteur || ""} · {ucsSelected.type || "Structuré"} · {ucsSelected.isin || ""}</div>
+          </div>
+          <div style={{ display: "flex", gap: 6 }}>
+            <button onClick={() => exportUcsPDF(ucsSelected, ucsHistoData)} style={{ padding: "8px 18px", borderRadius: 8, border: "1px solid rgba(201,162,39,0.3)", background: "rgba(201,162,39,0.15)", color: C.gold, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>↓ Export PDF</button>
+            <button onClick={() => setUcsForm(ucsSelected)} style={{ padding: "8px 14px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.15)", background: "transparent", color: "rgba(255,255,255,0.6)", fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>Modifier</button>
+            <button onClick={() => { if(confirm("Supprimer ce produit ?")) deleteUcsProduct(ucsSelected.id); }} style={{ padding: "8px 14px", borderRadius: 8, border: "1px solid rgba(239,68,68,0.3)", background: "rgba(239,68,68,0.1)", color: "#fca5a5", fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>Supprimer</button>
+          </div>
+        </div>
+        <div style={{ display: "flex", gap: 8, marginTop: 14, flexWrap: "wrap" }}>
+          {[
+            { l: "Sous-jacent", v: ucsSelected.sousjacent },
+            { l: "Coupon", v: ucsSelected.coupon },
+            { l: "Barrière", v: ucsSelected.barriere },
+            { l: "Lancement", v: ucsSelected.dateLancement },
+            { l: "Échéance", v: ucsSelected.dateEcheance },
+            { l: "Fréquence", v: ucsSelected.frequence },
+            { l: "Nominal", v: ucsSelected.valeurNominale ? parseFloat(ucsSelected.valeurNominale).toLocaleString("fr-FR") + " €" : null },
+          ].filter(x => x.v).map(x => <span key={x.l} style={{ padding: "4px 12px", borderRadius: 20, background: "rgba(201,162,39,0.15)", fontSize: 10, fontWeight: 600 }}><span style={{ color: "rgba(255,255,255,0.5)" }}>{x.l}: </span><span style={{ color: C.gold }}>{x.v}</span></span>)}
+        </div>
+      </div>
+      {ucsSelected.description && <div style={{ padding: "16px 28px", background: "linear-gradient(135deg,#fff9ec,#fffef5)", borderBottom: "1px solid " + C.borderGold }}>
+        <div style={{ fontSize: 10, fontWeight: 700, color: C.textDim, textTransform: "uppercase", letterSpacing: .6, marginBottom: 6 }}>Mécanisme du produit</div>
+        <div style={{ fontSize: 13, color: C.text, lineHeight: 1.7 }}>{ucsSelected.description}</div>
+      </div>}
+    </div>
+
+    {/* Chart & reporting */}
+    {ucsHistoLoading && <div style={{ ...card, padding: 40, textAlign: "center" }}>
+      <div className="spin" style={{ width: 24, height: 24, border: "3px solid " + C.borderGold, borderTopColor: C.gold, borderRadius: "50%", margin: "0 auto 12px" }} />
+      <div style={{ fontSize: 13, color: C.textDim }}>Chargement des données du sous-jacent...</div>
+    </div>}
+
+    {!ucsHistoLoading && ucsHistoData && ucsHistoData.length > 0 && (() => {
+      const pts = ucsHistoData;
+      const last = pts[pts.length - 1];
+      const first = pts[0];
+      const perf = ((last.close / first.close - 1) * 100);
+      const maxP = Math.max(...pts.map(p => p.close));
+      const minP = Math.min(...pts.map(p => p.close));
+      const W = 820, H = 260, PL = 60, PR = 16, PT = 16, PB = 32;
+      const px = (i) => PL + i / (pts.length - 1) * (W - PL - PR);
+      const py = (v) => PT + (1 - (v - minP * 0.98) / (maxP * 1.02 - minP * 0.98)) * (H - PT - PB);
+      const dPath = pts.map((p, i) => (i === 0 ? "M" : "L") + px(i) + "," + py(p.close)).join(" ");
+      const areaPath = dPath + " L" + px(pts.length - 1) + "," + (H - PB) + " L" + px(0) + "," + (H - PB) + " Z";
+
+      return <div>
+        {/* Stats */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 16 }}>
+          {[
+            { l: "Dernière VL sous-jacent", v: last.close.toFixed(2), c: C.gold },
+            { l: "Performance", v: (perf >= 0 ? "+" : "") + perf.toFixed(2) + "%", c: perf >= 0 ? C.green : C.red },
+            { l: "Plus haut", v: maxP.toFixed(2), c: C.navy },
+            { l: "Plus bas", v: minP.toFixed(2), c: C.navy },
+          ].map(s => <div key={s.l} style={{ ...card, padding: 16, textAlign: "center" }}>
+            <div style={{ fontSize: 9, fontWeight: 700, color: C.textDim, textTransform: "uppercase", letterSpacing: .6, marginBottom: 6 }}>{s.l}</div>
+            <div style={{ fontSize: 22, fontWeight: 800, color: s.c }}>{s.v}</div>
+          </div>)}
+        </div>
+
+        {/* Chart */}
+        <div style={{ ...card, padding: 20, marginBottom: 16 }}>
+          <div style={{ fontSize: 13, fontWeight: 800, color: C.navy, marginBottom: 14 }}>📈 Évolution du sous-jacent — {ucsSelected.sousjacent || ucsSelected.soujacentSymbol}</div>
+          <svg width="100%" viewBox={"0 0 " + W + " " + H}>
+            <defs>
+              <linearGradient id="ucsFill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor={C.gold} stopOpacity="0.15" />
+                <stop offset="100%" stopColor={C.gold} stopOpacity="0.01" />
+              </linearGradient>
+            </defs>
+            {[0, .25, .5, .75, 1].map(p => {
+              const y = PT + p * (H - PT - PB);
+              const v = maxP * 1.02 - p * (maxP * 1.02 - minP * 0.98);
+              return <g key={p}><line x1={PL} y1={y} x2={W - PR} y2={y} stroke={C.borderGold} strokeWidth="1" /><text x={PL - 4} y={y + 3} textAnchor="end" fontSize="9" fill={C.textDim}>{v.toFixed(0)}</text></g>;
+            })}
+            <path d={areaPath} fill="url(#ucsFill)" />
+            <path d={dPath} fill="none" stroke={C.gold} strokeWidth="2" strokeLinejoin="round" />
+            <circle cx={px(pts.length - 1)} cy={py(last.close)} r="4" fill={C.gold} />
+          </svg>
+        </div>
+
+        {/* History table */}
+        <div style={{ ...card, padding: 20 }}>
+          <div style={{ fontSize: 13, fontWeight: 800, color: C.navy, marginBottom: 14 }}>📋 Historique des valeurs liquidatives</div>
+          <div style={{ overflowX: "auto", maxHeight: 400, overflowY: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+              <thead><tr style={{ background: C.bgSub, position: "sticky", top: 0 }}>
+                <th style={{ padding: "10px 12px", textAlign: "left", fontWeight: 700, color: C.navy, borderBottom: "2px solid " + C.borderGold, fontSize: 10, textTransform: "uppercase", letterSpacing: .6 }}>Date</th>
+                <th style={{ padding: "10px 8px", textAlign: "right", fontWeight: 700, color: C.navy, borderBottom: "2px solid " + C.borderGold, fontSize: 10, textTransform: "uppercase", letterSpacing: .6 }}>Clôture</th>
+                <th style={{ padding: "10px 8px", textAlign: "right", fontWeight: 700, color: C.navy, borderBottom: "2px solid " + C.borderGold, fontSize: 10, textTransform: "uppercase", letterSpacing: .6 }}>Plus haut</th>
+                <th style={{ padding: "10px 8px", textAlign: "right", fontWeight: 700, color: C.navy, borderBottom: "2px solid " + C.borderGold, fontSize: 10, textTransform: "uppercase", letterSpacing: .6 }}>Plus bas</th>
+                <th style={{ padding: "10px 8px", textAlign: "right", fontWeight: 700, color: C.navy, borderBottom: "2px solid " + C.borderGold, fontSize: 10, textTransform: "uppercase", letterSpacing: .6 }}>Variation</th>
+              </tr></thead>
+              <tbody>{[...pts].reverse().slice(0, 60).map((p, i) => {
+                const prev = pts[pts.indexOf(p) - 1];
+                const chg = prev ? ((p.close / prev.close - 1) * 100) : 0;
+                return <tr key={i} style={{ borderBottom: "1px solid " + C.border, background: i % 2 === 0 ? C.bgCard : C.bgSub }}>
+                  <td style={{ padding: "8px 12px", fontWeight: 500 }}>{p.date}</td>
+                  <td style={{ padding: "8px", textAlign: "right", fontWeight: 700, color: C.navy }}>{p.close.toFixed(2)}</td>
+                  <td style={{ padding: "8px", textAlign: "right", color: C.textDim }}>{(p.high || p.close).toFixed(2)}</td>
+                  <td style={{ padding: "8px", textAlign: "right", color: C.textDim }}>{(p.low || p.close).toFixed(2)}</td>
+                  <td style={{ padding: "8px", textAlign: "right" }}><span style={{ padding: "2px 8px", borderRadius: 6, background: chg >= 0 ? C.greenBg : C.redBg, color: chg >= 0 ? C.green : C.red, fontWeight: 700, fontSize: 11 }}>{(chg >= 0 ? "+" : "") + chg.toFixed(2)}%</span></td>
+                </tr>;
+              })}</tbody>
+            </table>
+          </div>
+        </div>
+      </div>;
+    })()}
+
+    {!ucsHistoLoading && !ucsHistoData && ucsSelected.soujacentSymbol && <div style={{ ...card, padding: 20, textAlign: "center" }}>
+      <div style={{ fontSize: 13, color: C.textDim, marginBottom: 10 }}>Aucune donnée historique trouvée pour {ucsSelected.soujacentSymbol}</div>
+      <button onClick={() => fetchUcsHisto(ucsSelected.soujacentSymbol)} style={{ padding: "8px 18px", borderRadius: 8, border: "none", background: "linear-gradient(135deg," + C.navy + "," + C.navyL + ")", color: C.gold, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Réessayer</button>
+    </div>}
+
+    {!ucsSelected.soujacentSymbol && <div style={{ ...card, padding: 20, textAlign: "center" }}>
+      <div style={{ fontSize: 13, color: C.textDim }}>Renseignez le symbole du sous-jacent (FMP) pour afficher le reporting</div>
+      <button onClick={() => setUcsForm(ucsSelected)} style={{ marginTop: 10, padding: "8px 18px", borderRadius: 8, border: "none", background: "linear-gradient(135deg," + C.navy + "," + C.navyL + ")", color: C.gold, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Modifier le produit</button>
+    </div>}
+  </div>}
+</div>} {tab === "portefeuille" && <div className="fu"> <div style={{ marginBottom: 24 }}> <h1 style={{ fontSize: 28, fontWeight: 800, color: C.navy, margin: 0, letterSpacing: -.5, fontFamily: "'Inter',system-ui,sans-serif", textTransform: "uppercase" }}>MON PORTEFEUILLE</h1> <div style={{ fontSize: 12, color: C.textDim, marginTop: 4, fontWeight: 400 }}>Gérez vos portefeuilles favoris et alertes de marché</div> </div>
 
 {!buildingPortfolio && <div style={{ ...card, padding: 20, marginBottom: 20 }}> <div style={{ fontSize: 14, fontWeight: 800, color: C.navy, marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}> <span style={{ fontSize: 16 }}>✚</span> Créer un portefeuille manuellement </div> <div style={{ display: "flex", gap: 8 }}> <input value={portfolioName} onChange={e => setPortfolioName(e.target.value)} placeholder="Nom du nouveau portefeuille..." style={{ ...inp, flex: 1 }} onKeyDown={e => { if (e.key === "Enter" && portfolioName.trim()) createEmptyPortfolio(portfolioName); }} /> <button onClick={() => createEmptyPortfolio(portfolioName)} disabled={!portfolioName.trim()} style={{ padding: "10px 24px", borderRadius: 10, border: "none", background: portfolioName.trim() ? "linear-gradient(135deg," + C.navy + "," + C.navyL + ")" : C.bgSub, color: portfolioName.trim() ? C.gold : C.textDim, fontWeight: 800, fontSize: 13, cursor: portfolioName.trim() ? "pointer" : "default", fontFamily: "inherit", whiteSpace: "nowrap" }}>Créer</button> </div> </div>}
 {buildingPortfolio && <div style={{ ...card, padding: 0, marginBottom: 20, overflow: "hidden" }}> <div style={{ padding: "16px 20px", background: "linear-gradient(135deg," + C.navy + "," + C.navyL + ")", display: "flex", justifyContent: "space-between", alignItems: "center" }}> <div> <div style={{ fontSize: 16, fontWeight: 800, color: C.gold }}>{buildingPortfolio.name}</div> <div style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", marginTop: 2 }}>{buildingPortfolio.alloc.length} fonds · Total: {buildingPortfolio.alloc.reduce((s, a) => s + a.pct, 0)}%</div> </div> <div style={{ display: "flex", gap: 6 }}> <button onClick={saveBuildingPortfolio} disabled={!buildingPortfolio.alloc.length} style={{ padding: "8px 18px", borderRadius: 8, border: "none", background: buildingPortfolio.alloc.length ? "linear-gradient(135deg," + C.gold + "," + C.goldL + ")" : "rgba(255,255,255,0.1)", color: buildingPortfolio.alloc.length ? C.navy : "rgba(255,255,255,0.3)", fontWeight: 800, fontSize: 12, cursor: buildingPortfolio.alloc.length ? "pointer" : "default", fontFamily: "inherit" }}>Enregistrer</button> <button onClick={() => setBuildingPortfolio(null)} style={{ padding: "8px 14px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.15)", background: "transparent", color: "rgba(255,255,255,0.6)", fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>Annuler</button> </div> </div> <div style={{ padding: "16px 20px" }}> <div style={{ marginBottom: 14 }}> <input value={buildSearch} onChange={e => setBuildSearch(e.target.value)} placeholder="Rechercher un fonds par nom ou ISIN..." style={{ ...inp, fontSize: 13 }} /> {buildSearch.length >= 2 && <div style={{ maxHeight: 200, overflowY: "auto", border: "1px solid " + C.borderGold, borderRadius: 10, marginTop: 6, background: C.bgCard }}> {funds.filter(f => { const q = buildSearch.toLowerCase(); return (f.nom.toLowerCase().includes(q) || (f.isin && f.isin.toLowerCase().includes(q)) || (f.soc && f.soc.toLowerCase().includes(q))); }).slice(0, 15).map(f => { const already = buildingPortfolio.alloc.some(a => a.fund.id === f.id); return <div key={f.id} onClick={() => !already && addFundToBuilding(f)} style={{ padding: "10px 14px", borderBottom: "1px solid " + C.border, cursor: already ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "space-between", opacity: already ? 0.4 : 1, transition: "background .1s" }} onMouseEnter={e => { if (!already) e.currentTarget.style.background = C.bgSub; }} onMouseLeave={e => e.currentTarget.style.background = "transparent"}> <div> <div style={{ fontSize: 12, fontWeight: 600, color: C.navy }}>{f.nom}</div> <div style={{ fontSize: 10, color: C.textDim, marginTop: 1 }}>{f.soc || ""}{f.isin ? " · " + f.isin : ""}{f.marche ? " · " + f.marche : ""}</div> </div> <div style={{ display: "flex", alignItems: "center", gap: 6 }}> <SRI n={f.sri} compact /> {already ? <span style={{ fontSize: 10, color: C.textDim }}>Déjà ajouté</span> : <span style={{ fontSize: 18, color: C.gold }}>+</span>} </div> </div>; })} {funds.filter(f => { const q = buildSearch.toLowerCase(); return f.nom.toLowerCase().includes(q) || (f.isin && f.isin.toLowerCase().includes(q)); }).length === 0 && <div style={{ padding: 14, textAlign: "center", fontSize: 12, color: C.textDim }}>Aucun fonds trouvé</div>} </div>} </div> {buildingPortfolio.alloc.length > 0 && <div> <div style={{ fontSize: 11, fontWeight: 700, color: C.textDim, textTransform: "uppercase", letterSpacing: .8, marginBottom: 8 }}>Allocation ({buildingPortfolio.alloc.reduce((s, a) => s + a.pct, 0)}%)</div> {buildingPortfolio.alloc.map((a, i) => <div key={a.fund.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: i < buildingPortfolio.alloc.length - 1 ? "1px solid " + C.border : "none" }}> <div style={{ width: 6, height: 6, borderRadius: 2, background: PALETTE[i % PALETTE.length], flexShrink: 0 }} /> <div style={{ flex: 1, minWidth: 0 }}> <div style={{ fontSize: 12, fontWeight: 600, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.fund.nom}</div> <div style={{ fontSize: 10, color: C.textDim }}>{a.fund.marche || ""} · SRI {a.fund.sri}</div> </div> <input type="number" value={a.pct} onChange={e => updateBuildingPct(a.fund.id, e.target.value)} style={{ width: 56, padding: "5px 8px", borderRadius: 6, border: "1px solid " + C.borderGold, textAlign: "center", fontSize: 13, fontWeight: 700, color: C.gold, background: C.bgCard, fontFamily: "inherit", outline: "none" }} /> <span style={{ fontSize: 12, color: C.textDim }}>%</span> <button onClick={() => removeFundFromBuilding(a.fund.id)} style={{ background: "none", border: "none", color: C.red, cursor: "pointer", fontSize: 16, padding: "0 4px", lineHeight: 1 }}>×</button> </div>)} {buildingPortfolio.alloc.reduce((s, a) => s + a.pct, 0) !== 100 && <div style={{ marginTop: 8, fontSize: 11, color: "#d97706", fontWeight: 600 }}>⚠ Le total doit être égal à 100% (actuellement {buildingPortfolio.alloc.reduce((s, a) => s + a.pct, 0)}%)</div>} </div>} {buildingPortfolio.alloc.length === 0 && <div style={{ textAlign: "center", padding: 20, color: C.textDim, fontSize: 13 }}>Recherchez et ajoutez des fonds ci-dessus</div>} </div> </div>}
