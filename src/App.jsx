@@ -705,7 +705,7 @@ function LineChart(props) {
             borderRadius: 2
           }} />{s.label}</div>;
       })} </div> <div style={{
-      overflowX: "auto"
+      overflowX: "auto", WebkitOverflowScrolling: "touch"
     }}> <table style={{
         width: "100%",
         borderCollapse: "collapse",
@@ -3090,7 +3090,8 @@ const [ucsHistoData, setUcsHistoData] = useState(null);
             display: "flex",
             alignItems: "center",
             gap: 10,
-            marginBottom: 20
+            marginBottom: 20,
+            flexWrap: "wrap"
           }}> <div style={{
               display: "flex",
               background: C.bgCard,
@@ -3131,7 +3132,7 @@ const [ucsHistoData, setUcsHistoData] = useState(null);
               color: C.textDim
             }}> {allocMode === "auto" ? "Génération automatique selon profil SRI et montant" : "Composez votre allocation librement fond par fond"} </div> </div> {} {allocMode === "auto" && <div> <div style={{
               display: "grid",
-              gridTemplateColumns: "240px 1fr",
+              gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
               gap: 20,
               alignItems: "start"
             }}> {} <div style={{
@@ -3688,7 +3689,7 @@ const [ucsHistoData, setUcsHistoData] = useState(null);
                   color: C.textDim,
                   marginBottom: 16
                 }}> {fmpStats ? "Données réelles FMP (ISIN reconnus) · fallback simulé si non trouvé" : "Simulations indicatives · base profil SRI"} </div> <div style={{
-                  overflowX: "auto"
+                  overflowX: "auto", WebkitOverflowScrolling: "touch"
                 }}> {(() => {
                     const yr = new Date().getFullYear();
                     const yrs = Array.from({
@@ -3833,7 +3834,7 @@ const [ucsHistoData, setUcsHistoData] = useState(null);
             }
             return <div style={{
               display: "grid",
-              gridTemplateColumns: "300px 1fr",
+              gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
               gap: 20,
               alignItems: "start"
             }}> {} <div style={{
@@ -4798,7 +4799,7 @@ const [ucsHistoData, setUcsHistoData] = useState(null);
                     color: C.navy,
                     marginBottom: 14
                   }}>📊 Performances annuelles</div> <div style={{
-                    overflowX: "auto"
+                    overflowX: "auto", WebkitOverflowScrolling: "touch"
                   }}> <table style={{
                       width: "100%",
                       borderCollapse: "collapse",
@@ -5224,7 +5225,7 @@ const [ucsHistoData, setUcsHistoData] = useState(null);
                   }}>{(pos ? "+" : "") + v.toFixed(2) + "%"}</div> </div>;
               })} </div> {} <div style={{
               display: "grid",
-              gridTemplateColumns: "1fr 300px",
+              gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
               gap: 16,
               alignItems: "start"
             }}> {} <div style={{
@@ -5869,7 +5870,7 @@ const [ucsHistoData, setUcsHistoData] = useState(null);
             {/* History table */}
             <div style={{ marginBottom: 16 }}>
               <div style={{ fontSize: 12, fontWeight: 700, color: C.navy, marginBottom: 10 }}>Historique des valeurs</div>
-              <div style={{ overflowX: "auto", maxHeight: 300, overflowY: "auto", borderRadius: 10, border: "1px solid " + C.borderGold }}>
+              <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch", maxHeight: 300, overflowY: "auto", borderRadius: 10, border: "1px solid " + C.borderGold }}>
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
                   <thead><tr style={{ background: C.bgSub, position: "sticky", top: 0 }}>
                     {["Date", "Clôture", "Plus haut", "Plus bas", "Variation"].map(h => <th key={h} style={{ padding: "8px 10px", textAlign: h === "Date" ? "left" : "right", fontWeight: 700, color: C.navy, borderBottom: "2px solid " + C.borderGold, fontSize: 9, textTransform: "uppercase", letterSpacing: .5 }}>{h}</th>)}
@@ -5974,7 +5975,7 @@ const [ucsHistoData, setUcsHistoData] = useState(null);
               borderRadius: 10,
               padding: "14px 16px",
               lineHeight: 2,
-              overflowX: "auto",
+              overflowX: "auto", WebkitOverflowScrolling: "touch",
               border: "1px solid rgba(201,162,39,.3)"
             }}> <span style={{
                 color: "#93c5fd"
