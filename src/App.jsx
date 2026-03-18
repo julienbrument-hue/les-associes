@@ -1224,6 +1224,9 @@ export default function App() {
     try { const s = localStorage.getItem("les_associes_portfolios"); return s ? JSON.parse(s) : []; } catch(e) { return []; }
   });
   const [portfolioName, setPortfolioName] = useState("");
+  const [buildingPortfolio, setBuildingPortfolio] = useState(null);
+  const [buildSearch, setBuildSearch] = useState("");
+  const [addToPortfolioFund, setAddToPortfolioFund] = useState(null);
   const [alertThresholds, setAlertThresholds] = useState(() => {
     try { const s = localStorage.getItem("les_associes_alerts"); return s ? JSON.parse(s) : {}; } catch(e) { return {}; }
   });
@@ -2420,6 +2423,71 @@ export default function App() {
     setSavedPortfolios(updated);
     localStorage.setItem("les_associes_portfolios", JSON.stringify(updated));
     setPortfolioName("");
+  }
+  function createEmptyPortfolio(name) {
+    if (!name.trim()) return;
+    setBuildingPortfolio({ name: name.trim(), alloc: [] });
+    setPortfolioName("");
+  }
+  function addFundToBuilding(fund, pct) {
+    if (!buildingPortfolio) return;
+    if (buildingPortfolio.alloc.some(a => a.fund.id === fund.id)) return;
+    setBuildingPortfolio(prev => ({
+      ...prev,
+      alloc: [...prev.alloc, { fund, pct: pct || Math.round(100 / (prev.alloc.length + 1)) }]
+    }));
+  }
+  function removeFundFromBuilding(fundId) {
+    setBuildingPortfolio(prev => ({
+      ...prev,
+      alloc: prev.alloc.filter(a => a.fund.id !== fundId)
+    }));
+  }
+  function updateBuildingPct(fundId, pct) {
+    setBuildingPortfolio(prev => ({
+      ...prev,
+      alloc: prev.alloc.map(a => a.fund.id === fundId ? { ...a, pct: Math.max(0, Math.min(100, parseInt(pct) || 0)) } : a)
+    }));
+  }
+  function saveBuildingPortfolio() {
+    if (!buildingPortfolio || !buildingPortfolio.alloc.length) return;
+    const totalPct = buildingPortfolio.alloc.reduce((s, a) => s + a.pct, 0);
+    if (totalPct !== 100) {
+      const factor = 100 / totalPct;
+      buildingPortfolio.alloc.forEach(a => a.pct = Math.round(a.pct * factor));
+      const diff = 100 - buildingPortfolio.alloc.reduce((s, a) => s + a.pct, 0);
+      if (buildingPortfolio.alloc.length > 0) buildingPortfolio.alloc[0].pct += diff;
+    }
+    const portfolio = {
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2,6),
+      name: buildingPortfolio.name,
+      date: new Date().toISOString(),
+      sri: Math.round(buildingPortfolio.alloc.reduce((s, a) => s + a.fund.sri * a.pct / 100, 0)),
+      duree: duree,
+      compagnie: "",
+      montant: null,
+      marches: [...new Set(buildingPortfolio.alloc.map(a => a.fund.marche).filter(Boolean))],
+      alloc: buildingPortfolio.alloc.map(a => ({ nom: a.fund.nom, isin: a.fund.isin, soc: a.fund.soc, sri: a.fund.sri, marche: a.fund.marche, pct: a.pct })),
+      allocMode: "manuel"
+    };
+    const updated = [...savedPortfolios, portfolio];
+    setSavedPortfolios(updated);
+    localStorage.setItem("les_associes_portfolios", JSON.stringify(updated));
+    setBuildingPortfolio(null);
+    setBuildSearch("");
+  }
+  function addFundToExistingPortfolio(fund, portfolioId) {
+    const updated = savedPortfolios.map(p => {
+      if (p.id !== portfolioId) return p;
+      if (p.alloc.some(a => a.isin === fund.isin && a.nom === fund.nom)) return p;
+      const newAlloc = [...p.alloc, { nom: fund.nom, isin: fund.isin, soc: fund.soc, sri: fund.sri, marche: fund.marche, pct: 0 }];
+      const pctEach = Math.round(100 / newAlloc.length);
+      newAlloc.forEach((a, i) => a.pct = i === 0 ? 100 - pctEach * (newAlloc.length - 1) : pctEach);
+      return { ...p, alloc: newAlloc, sri: Math.round(newAlloc.reduce((s, a) => s + a.sri * a.pct / 100, 0)) };
+    });
+    setSavedPortfolios(updated);
+    localStorage.setItem("les_associes_portfolios", JSON.stringify(updated));
+    setAddToPortfolioFund(null);
   }
   function deletePortfolio(id) {
     const updated = savedPortfolios.filter(p => p.id !== id);
@@ -5106,7 +5174,8 @@ export default function App() {
                   borderLeft: "3px solid " + (fondsFiche && fondsFiche.id === f.id ? col : C.borderGold),
                   cursor: "pointer",
                   transition: "all .15s",
-                  background: fondsFiche && fondsFiche.id === f.id ? C.goldXL : C.bgCard
+                  background: fondsFiche && fondsFiche.id === f.id ? C.goldXL : C.bgCard,
+                  position: "relative"
                 }}> <div style={{
                     flex: 1,
                     minWidth: 0
@@ -5159,9 +5228,11 @@ export default function App() {
                       cursor: "pointer",
                       color: C.red,
                       fontSize: 13
-                    }}>🗑</button> </div> </div>;
+                    }}>🗑</button> </div> <button onClick={(e) => { e.stopPropagation(); setAddToPortfolioFund(f); }} style={{ position: "absolute", top: 8, right: 8, background: "none", border: "none", fontSize: 16, cursor: "pointer", color: C.gold, opacity: 0.6, padding: "2px" }} title="Ajouter à un portefeuille">2665</button> </div>;
               })} </div> {fondsFiche && <FicheFond f={fondsFiche} onClose={() => setFondsFiche(null)} getPts={getFondPerf} />} </div> </div>} {} {tab === "portefeuille" && <div className="fu"> <div style={{ marginBottom: 24 }}> <h1 style={{ fontSize: 28, fontWeight: 800, color: C.navy, margin: 0, letterSpacing: -.5, fontFamily: "'Inter',system-ui,sans-serif", textTransform: "uppercase" }}>MON PORTEFEUILLE</h1> <div style={{ fontSize: 12, color: C.textDim, marginTop: 4, fontWeight: 400 }}>Gérez vos portefeuilles favoris et alertes de marché</div> </div>
 
+{!buildingPortfolio && <div style={{ ...card, padding: 20, marginBottom: 20 }}> <div style={{ fontSize: 14, fontWeight: 800, color: C.navy, marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}> <span style={{ fontSize: 16 }}>✚</span> Créer un portefeuille manuellement </div> <div style={{ display: "flex", gap: 8 }}> <input value={portfolioName} onChange={e => setPortfolioName(e.target.value)} placeholder="Nom du nouveau portefeuille..." style={{ ...inp, flex: 1 }} onKeyDown={e => { if (e.key === "Enter" && portfolioName.trim()) createEmptyPortfolio(portfolioName); }} /> <button onClick={() => createEmptyPortfolio(portfolioName)} disabled={!portfolioName.trim()} style={{ padding: "10px 24px", borderRadius: 10, border: "none", background: portfolioName.trim() ? "linear-gradient(135deg," + C.navy + "," + C.navyL + ")" : C.bgSub, color: portfolioName.trim() ? C.gold : C.textDim, fontWeight: 800, fontSize: 13, cursor: portfolioName.trim() ? "pointer" : "default", fontFamily: "inherit", whiteSpace: "nowrap" }}>Créer</button> </div> </div>}
+{buildingPortfolio && <div style={{ ...card, padding: 0, marginBottom: 20, overflow: "hidden" }}> <div style={{ padding: "16px 20px", background: "linear-gradient(135deg," + C.navy + "," + C.navyL + ")", display: "flex", justifyContent: "space-between", alignItems: "center" }}> <div> <div style={{ fontSize: 16, fontWeight: 800, color: C.gold }}>{buildingPortfolio.name}</div> <div style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", marginTop: 2 }}>{buildingPortfolio.alloc.length} fonds · Total: {buildingPortfolio.alloc.reduce((s, a) => s + a.pct, 0)}%</div> </div> <div style={{ display: "flex", gap: 6 }}> <button onClick={saveBuildingPortfolio} disabled={!buildingPortfolio.alloc.length} style={{ padding: "8px 18px", borderRadius: 8, border: "none", background: buildingPortfolio.alloc.length ? "linear-gradient(135deg," + C.gold + "," + C.goldL + ")" : "rgba(255,255,255,0.1)", color: buildingPortfolio.alloc.length ? C.navy : "rgba(255,255,255,0.3)", fontWeight: 800, fontSize: 12, cursor: buildingPortfolio.alloc.length ? "pointer" : "default", fontFamily: "inherit" }}>Enregistrer</button> <button onClick={() => setBuildingPortfolio(null)} style={{ padding: "8px 14px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.15)", background: "transparent", color: "rgba(255,255,255,0.6)", fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>Annuler</button> </div> </div> <div style={{ padding: "16px 20px" }}> <div style={{ marginBottom: 14 }}> <input value={buildSearch} onChange={e => setBuildSearch(e.target.value)} placeholder="Rechercher un fonds par nom ou ISIN..." style={{ ...inp, fontSize: 13 }} /> {buildSearch.length >= 2 && <div style={{ maxHeight: 200, overflowY: "auto", border: "1px solid " + C.borderGold, borderRadius: 10, marginTop: 6, background: C.bgCard }}> {funds.filter(f => { const q = buildSearch.toLowerCase(); return (f.nom.toLowerCase().includes(q) || (f.isin && f.isin.toLowerCase().includes(q)) || (f.soc && f.soc.toLowerCase().includes(q))); }).slice(0, 15).map(f => { const already = buildingPortfolio.alloc.some(a => a.fund.id === f.id); return <div key={f.id} onClick={() => !already && addFundToBuilding(f)} style={{ padding: "10px 14px", borderBottom: "1px solid " + C.border, cursor: already ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "space-between", opacity: already ? 0.4 : 1, transition: "background .1s" }} onMouseEnter={e => { if (!already) e.currentTarget.style.background = C.bgSub; }} onMouseLeave={e => e.currentTarget.style.background = "transparent"}> <div> <div style={{ fontSize: 12, fontWeight: 600, color: C.navy }}>{f.nom}</div> <div style={{ fontSize: 10, color: C.textDim, marginTop: 1 }}>{f.soc || ""}{f.isin ? " · " + f.isin : ""}{f.marche ? " · " + f.marche : ""}</div> </div> <div style={{ display: "flex", alignItems: "center", gap: 6 }}> <SRI n={f.sri} compact /> {already ? <span style={{ fontSize: 10, color: C.textDim }}>Déjà ajouté</span> : <span style={{ fontSize: 18, color: C.gold }}>+</span>} </div> </div>; })} {funds.filter(f => { const q = buildSearch.toLowerCase(); return f.nom.toLowerCase().includes(q) || (f.isin && f.isin.toLowerCase().includes(q)); }).length === 0 && <div style={{ padding: 14, textAlign: "center", fontSize: 12, color: C.textDim }}>Aucun fonds trouvé</div>} </div>} </div> {buildingPortfolio.alloc.length > 0 && <div> <div style={{ fontSize: 11, fontWeight: 700, color: C.textDim, textTransform: "uppercase", letterSpacing: .8, marginBottom: 8 }}>Allocation ({buildingPortfolio.alloc.reduce((s, a) => s + a.pct, 0)}%)</div> {buildingPortfolio.alloc.map((a, i) => <div key={a.fund.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: i < buildingPortfolio.alloc.length - 1 ? "1px solid " + C.border : "none" }}> <div style={{ width: 6, height: 6, borderRadius: 2, background: PALETTE[i % PALETTE.length], flexShrink: 0 }} /> <div style={{ flex: 1, minWidth: 0 }}> <div style={{ fontSize: 12, fontWeight: 600, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.fund.nom}</div> <div style={{ fontSize: 10, color: C.textDim }}>{a.fund.marche || ""} · SRI {a.fund.sri}</div> </div> <input type="number" value={a.pct} onChange={e => updateBuildingPct(a.fund.id, e.target.value)} style={{ width: 56, padding: "5px 8px", borderRadius: 6, border: "1px solid " + C.borderGold, textAlign: "center", fontSize: 13, fontWeight: 700, color: C.gold, background: C.bgCard, fontFamily: "inherit", outline: "none" }} /> <span style={{ fontSize: 12, color: C.textDim }}>%</span> <button onClick={() => removeFundFromBuilding(a.fund.id)} style={{ background: "none", border: "none", color: C.red, cursor: "pointer", fontSize: 16, padding: "0 4px", lineHeight: 1 }}>×</button> </div>)} {buildingPortfolio.alloc.reduce((s, a) => s + a.pct, 0) !== 100 && <div style={{ marginTop: 8, fontSize: 11, color: "#d97706", fontWeight: 600 }}>⚠ Le total doit être égal à 100% (actuellement {buildingPortfolio.alloc.reduce((s, a) => s + a.pct, 0)}%)</div>} </div>} {buildingPortfolio.alloc.length === 0 && <div style={{ textAlign: "center", padding: 20, color: C.textDim, fontSize: 13 }}>Recherchez et ajoutez des fonds ci-dessus</div>} </div> </div>}
 {marketAlerts.length > 0 && <div style={{ ...card, padding: 16, marginBottom: 20, border: "1px solid rgba(239,68,68,0.3)", background: "linear-gradient(135deg, #fef2f2, #fff5f5)" }}> <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}> <span style={{ fontSize: 18 }}>🚨</span> <span style={{ fontSize: 14, fontWeight: 800, color: "#991b1b" }}>Alertes de marché actives</span> </div> {marketAlerts.map((a, i) => <div key={i} style={{ padding: "8px 12px", borderRadius: 8, background: "#fff", border: "1px solid rgba(239,68,68,0.15)", marginBottom: 6, fontSize: 12, color: "#991b1b", display: "flex", alignItems: "center", gap: 8 }}> <span style={{ fontWeight: 700 }}>{a.index}</span> <span style={{ color: "#ef4444", fontWeight: 800 }}>▼ {Math.abs(a.change).toFixed(2)}%</span> <span style={{ color: "#6b7280" }}>•</span> <span>Seuil de -{Math.abs(a.threshold)}% atteint pour <strong>{a.portfolioName}</strong></span> </div>)} </div>}
 
 {results && results.alloc && results.alloc.length > 0 && <div style={{ ...card, padding: 20, marginBottom: 20 }}> <div style={{ fontSize: 14, fontWeight: 800, color: C.navy, marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}> <span style={{ fontSize: 16 }}>💾</span> Sauvegarder l'allocation en cours </div> <div style={{ display: "flex", gap: 8 }}> <input value={portfolioName} onChange={e => setPortfolioName(e.target.value)} placeholder="Nom du portefeuille (ex: Client Dupont - Prudent)" style={{ ...inp, flex: 1 }} onKeyDown={e => { if (e.key === "Enter" && portfolioName.trim()) savePortfolio(portfolioName); }} /> <button onClick={() => savePortfolio(portfolioName)} disabled={!portfolioName.trim()} style={{ padding: "10px 24px", borderRadius: 10, border: "none", background: portfolioName.trim() ? "linear-gradient(135deg," + C.navy + "," + C.navyL + ")" : C.bgSub, color: portfolioName.trim() ? C.gold : C.textDim, fontWeight: 800, fontSize: 13, cursor: portfolioName.trim() ? "pointer" : "default", fontFamily: "inherit", whiteSpace: "nowrap" }}>Enregistrer ♥</button> </div> <div style={{ fontSize: 11, color: C.textDim, marginTop: 6 }}>{results.alloc.length} fonds · SRI moyen {(results.alloc.reduce((s, f) => s + f.sri * f.pct, 0) / 100).toFixed(1)} · {allocMode === "auto" ? "Automatique" : "Manuel"}</div> </div>}
@@ -6533,5 +6604,5 @@ export default function App() {
             cursor: "pointer",
             fontSize: 13,
             fontFamily: "inherit"
-          }}>Annuler</button> </div> </div> </div>} </div>;
+          }}>Annuler</button> </div> </div> </div>} {addToPortfolioFund && <div style={{ position: "fixed", inset: 0, background: "rgba(6,14,26,0.7)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(4px)" }} onClick={() => setAddToPortfolioFund(null)}> <div onClick={e => e.stopPropagation()} style={{ background: C.bgCard, borderRadius: 16, padding: 24, maxWidth: 420, width: "90%", boxShadow: C.shadowLg }}> <div style={{ fontSize: 15, fontWeight: 800, color: C.navy, marginBottom: 4 }}>Ajouter à un portefeuille</div> <div style={{ fontSize: 12, color: C.textDim, marginBottom: 16 }}>{addToPortfolioFund.nom}</div> {savedPortfolios.length === 0 && <div style={{ textAlign: "center", padding: 20, color: C.textDim, fontSize: 13 }}>Aucun portefeuille existant. Créez-en un d'abord dans l'onglet Mon portefeuille.</div>} {savedPortfolios.map(p => <button key={p.id} onClick={() => addFundToExistingPortfolio(addToPortfolioFund, p.id)} style={{ width: "100%", padding: "12px 16px", borderRadius: 10, border: "1px solid " + C.borderGold, background: C.bgCard, display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer", marginBottom: 6, fontFamily: "inherit", transition: "background .15s" }} onMouseEnter={e => e.currentTarget.style.background = C.bgSub} onMouseLeave={e => e.currentTarget.style.background = C.bgCard}> <div style={{ textAlign: "left" }}> <div style={{ fontSize: 13, fontWeight: 700, color: C.navy }}>{p.name}</div> <div style={{ fontSize: 10, color: C.textDim, marginTop: 2 }}>{p.alloc.length} fonds · SRI {p.sri}</div> </div> <span style={{ fontSize: 18, color: C.gold }}>+</span> </button>)} <button onClick={() => setAddToPortfolioFund(null)} style={{ width: "100%", padding: "10px", borderRadius: 8, border: "none", background: C.bgSub, color: C.textDim, fontSize: 12, cursor: "pointer", fontFamily: "inherit", marginTop: 8 }}>Annuler</button> </div> </div>} </div>;
 }
