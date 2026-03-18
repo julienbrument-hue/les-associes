@@ -19,9 +19,18 @@ export default async function handler(req, res) {
 
   try {
     const response = await fetch(url);
-    const data = await response.json();
-    // Cache 1h for historical data
-    res.setHeader("Cache-Control", "s-maxage=3600, stale-while-revalidate=86400");
+    const text = await response.text();
+    // Try to parse as JSON, otherwise return raw
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch(e) {
+      return res.status(response.status).send(text);
+    }
+    // Cache 1h for historical data, 5min for quotes
+    const isHistorical = path.includes("historical");
+    const cacheTime = isHistorical ? 3600 : 300;
+    res.setHeader("Cache-Control", `s-maxage=${cacheTime}, stale-while-revalidate=86400`);
     res.status(response.status).json(data);
   } catch (e) {
     res.status(500).json({ error: "FMP API error: " + e.message });

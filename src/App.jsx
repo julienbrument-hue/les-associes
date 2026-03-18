@@ -463,14 +463,31 @@ async function fetchFMPPerf(isin) {
   try {
     const endYear = new Date().getFullYear() - 1;
     const startYear = endYear - 9;
-    const url = "/api/fmp?path=/api/v3/historical-price-full/" + encodeURIComponent(isin) + "&from=" + startYear + "-01-01" + "&to=" + endYear + "-12-31";
-    const res = await fetch(url);
+    // Step 1: Try ISIN directly as symbol (some EU funds use ISIN.exchange format)
+    var symbol = isin;
+    // Step 2: Try to find the ticker via search
+    try {
+      var searchRes = await fetch("/api/fmp?path=/stable/search-name&query=" + encodeURIComponent(isin) + "&limit=5");
+      if (searchRes.ok) {
+        var searchData = await searchRes.json();
+        if (Array.isArray(searchData) && searchData.length > 0) {
+          // Prefer exact ISIN match in symbol
+          var match = searchData.find(function(s) { return s.symbol && s.symbol.startsWith(isin); });
+          symbol = match ? match.symbol : searchData[0].symbol;
+        }
+      }
+    } catch(e) {}
+    // Step 3: Fetch historical prices using stable API
+    var url = "/api/fmp?path=/stable/historical-price-eod/full&symbol=" + encodeURIComponent(symbol) + "&from=" + startYear + "-01-01&to=" + endYear + "-12-31";
+    var res = await fetch(url);
     if (!res.ok) return null;
-    const json = await res.json();
-    if (!json.historical || json.historical.length < 50) return null;
-    const priceByYear = {};
-    json.historical.forEach(function (d) {
-      const y = parseInt(d.date.slice(0, 4));
+    var json = await res.json();
+    // Stable API returns array directly, or may return error string
+    var historical = Array.isArray(json) ? json : (json.historical || []);
+    if (historical.length < 50) return null;
+    var priceByYear = {};
+    historical.forEach(function (d) {
+      var y = parseInt(d.date.slice(0, 4));
       if (y >= startYear && y <= endYear) {
         if (!priceByYear[y] || d.date > priceByYear[y].date) {
           priceByYear[y] = {
@@ -480,22 +497,17 @@ async function fetchFMPPerf(isin) {
         }
       }
     });
-    const years = [];
+    var years = [];
     for (var y = startYear; y <= endYear; y++) years.push(y);
-    if (years.some(function (y) {
-      return !priceByYear[y];
-    })) return null;
-    const basePrice = priceByYear[startYear].price;
+    if (years.some(function (y) { return !priceByYear[y]; })) return null;
+    var basePrice = priceByYear[startYear].price;
     if (!basePrice || basePrice <= 0) return null;
-    const pts = [100];
+    var pts = [100];
     for (var i = 0; i < years.length; i++) {
       pts.push(parseFloat((priceByYear[years[i]].price / basePrice * 100).toFixed(2)));
     }
     try {
-      await window.localStorageSet(cacheKey, JSON.stringify({
-        ts: Date.now(),
-        data: pts
-      }));
+      await window.localStorageSet(cacheKey, JSON.stringify({ ts: Date.now(), data: pts }));
     } catch (e) {}
     return pts;
   } catch (e) {
@@ -1114,33 +1126,22 @@ function MarketTicker() {
     ];
     async function fetchIndices() {
       try {
-        const symbols = INDICES.map(i => i.symbol).join(',');
-        const res = await fetch('/api/fmp?path=/api/v3/quote/' + encodeURIComponent(symbols));
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        const data = await res.json();
-        if (Array.isArray(data) && data.length > 0) {
-          const mapped = INDICES.map(idx => {
-            const d = data.find(q => q.symbol === idx.symbol);
-            return d ? { ...idx, price: d.price, change: d.changesPercentage } : null;
-          }).filter(Boolean);
-          if (mapped.length > 0) { setIndices(mapped); setLoading(false); return; }
-        }
+        const results = await Promise.allSettled(
+          INDICES.map(async idx => {
+            const r = await fetch('/api/fmp?path=/stable/quote&symbol=' + encodeURIComponent(idx.symbol));
+            if (!r.ok) return null;
+            const d = await r.json();
+            if (Array.isArray(d) && d.length > 0 && d[0].price) {
+              return { ...idx, price: d[0].price, change: d[0].changePercentage || 0 };
+            }
+            return null;
+          })
+        );
+        const mapped = results.map(r => r.status === 'fulfilled' ? r.value : null).filter(Boolean);
+        if (mapped.length > 0) { setIndices(mapped); setLoading(false); return; }
         throw new Error('no data');
       } catch(e) {
-        // Fallback: try direct FMP with key
-        try {
-          const symbols = INDICES.map(i => i.symbol).join(',');
-          const res = await fetch(FMP_BASE + '/quote/' + encodeURIComponent(symbols) + '?apikey=' + FMP_KEY);
-          if (!res.ok) throw new Error('HTTP ' + res.status);
-          const data = await res.json();
-          if (Array.isArray(data)) {
-            const mapped = INDICES.map(idx => {
-              const d = data.find(q => q.symbol === idx.symbol);
-              return d ? { ...idx, price: d.price, change: d.changesPercentage } : null;
-            }).filter(Boolean);
-            if (mapped.length > 0) { setIndices(mapped); setLoading(false); return; }
-          }
-        } catch(e2) {}
+        // Fallback handled above
         // Static fallback
         setIndices(INDICES.map(idx => ({ ...idx, price: null, change: (Math.random() - 0.45) * 3 })));
         setLoading(false);
@@ -1253,7 +1254,7 @@ export default function App() {
     async function checkMarketAlerts() {
       try {
         const majorIndices = ['^GSPC', '^FCHI', '^GDAXI'];
-        const res = await fetch('/api/fmp?path=/api/v3/quote/' + encodeURIComponent(majorIndices.join(',')));
+        const res = await fetch('/api/fmp?path=/stable/quote&symbol=' + encodeURIComponent(majorIndices.join(',')));
         if (!res.ok) return;
         const data = await res.json();
         if (!Array.isArray(data)) return;
@@ -1261,14 +1262,14 @@ export default function App() {
         const names = { '^GSPC': 'S&P 500', '^FCHI': 'CAC 40', '^GDAXI': 'DAX' };
         data.forEach(q => {
           Object.entries(alertThresholds).forEach(([portfolioId, threshold]) => {
-            if (q.changesPercentage <= -Math.abs(threshold)) {
+            if (q.changePercentage <= -Math.abs(threshold)) {
               const portfolio = savedPortfolios.find(p => p.id === portfolioId);
               if (portfolio) {
                 alerts.push({
                   portfolioId,
                   portfolioName: portfolio.name,
                   index: names[q.symbol] || q.symbol,
-                  change: q.changesPercentage,
+                  change: q.changePercentage || 0,
                   threshold
                 });
               }
