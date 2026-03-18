@@ -1237,6 +1237,7 @@ const [ucsHistoLoading, setUcsHistoLoading] = useState(false);
 const [ucsHistoData, setUcsHistoData] = useState(null);
   const [ucsUploading, setUcsUploading] = useState(false);
   const [ucsLiveQuotes, setUcsLiveQuotes] = useState({});
+  const [mobileTab, setMobileTab] = useState(false);
   const [buildSearch, setBuildSearch] = useState("");
   const [addToPortfolioFund, setAddToPortfolioFund] = useState(null);
   const [alertThresholds, setAlertThresholds] = useState(() => {
@@ -2804,11 +2805,43 @@ const [ucsHistoData, setUcsHistoData] = useState(null);
     minHeight: "100vh",
     fontFamily: "'Inter',system-ui,sans-serif",
     color: C.text
-  }}> <style>{` @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap'); @keyframes spin{to{transform:rotate(360deg)}} @keyframes tickerScroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}} @keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}} @keyframes slideIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:none}} .fu{animation:fadeUp .3s cubic-bezier(.22,1,.36,1) both} .fu1{animation:fadeUp .3s .05s cubic-bezier(.22,1,.36,1) both} .fu2{animation:fadeUp .3s .1s cubic-bezier(.22,1,.36,1) both} .fu3{animation:fadeUp .3s .15s cubic-bezier(.22,1,.36,1) both} .spin{animation:spin .6s linear infinite} button{transition:all .15s} button:hover{opacity:.88;transform:translateY(-1px)} input::placeholder{color:#9ca3af} select option{background:#fff;color:#060e1a} ::-webkit-scrollbar{width:4px;height:4px} ::-webkit-scrollbar-track{background:transparent} ::-webkit-scrollbar-thumb{background:rgba(6,14,26,.12);border-radius:2px} .hov:hover{background:#f8f9fa!important;box-shadow:0 2px 12px rgba(6,14,26,0.08)!important} input:focus{border-color:rgba(201,162,39,0.5)!important;box-shadow:0 0 0 3px rgba(201,162,39,0.1)!important} `}</style> <MarketTicker /> {} <div style={{
+  }}> <style>{` @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap'); @keyframes spin{to{transform:rotate(360deg)}} @keyframes tickerScroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}} @keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}} @keyframes slideIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:none}} .fu{animation:fadeUp .3s cubic-bezier(.22,1,.36,1) both} .fu1{animation:fadeUp .3s .05s cubic-bezier(.22,1,.36,1) both} .fu2{animation:fadeUp .3s .1s cubic-bezier(.22,1,.36,1) both} .fu3{animation:fadeUp .3s .15s cubic-bezier(.22,1,.36,1) both} .spin{animation:spin .6s linear infinite} button{transition:all .15s} button:hover{opacity:.88;transform:translateY(-1px)} input::placeholder{color:#9ca3af} select option{background:#fff;color:#060e1a} ::-webkit-scrollbar{width:4px;height:4px} ::-webkit-scrollbar-track{background:transparent} ::-webkit-scrollbar-thumb{background:rgba(6,14,26,.12);border-radius:2px} .hov:hover{background:#f8f9fa!important;box-shadow:0 2px 12px rgba(6,14,26,0.08)!important} input:focus{border-color:rgba(201,162,39,0.5)!important;box-shadow:0 0 0 3px rgba(201,162,39,0.1)!important} @media(max-width:768px){.sidebar-desktop{display:none!important}.mobile-nav{display:flex!important}.main-content{padding:16px 12px 80px!important}.desktop-grid-4{grid-template-columns:1fr 1fr!important}.desktop-grid-2{grid-template-columns:1fr!important}}@media(min-width:769px){.mobile-nav{display:none!important}} `}</style> <MarketTicker />
+<div className="mobile-nav" style={{ display: "none", position: "fixed", bottom: 0, left: 0, right: 0, height: 64, background: "linear-gradient(180deg,#071020,#060e1a)", borderTop: "1px solid rgba(201,162,39,0.15)", zIndex: 9999, justifyContent: "space-around", alignItems: "center", padding: "0 4px" }}>
+  {[
+    { k: "actualites", icon: "📰", label: "Actu" },
+    { k: "allocation", icon: "⚖", label: "Alloc" },
+    { k: "ucs", icon: "◆", label: "UCS" },
+    { k: "portefeuille", icon: "♥", label: "Portef." },
+    { k: "more", icon: "☰", label: "Plus" },
+  ].map(t => {
+    if (t.k === "more") {
+      return <button key={t.k} onClick={() => setMobileTab(!mobileTab)} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, background: "none", border: "none", color: mobileTab ? C.gold : "rgba(255,255,255,0.4)", fontSize: 10, fontWeight: mobileTab ? 700 : 400, cursor: "pointer", fontFamily: "inherit", padding: "8px 4px" }}>
+        <span style={{ fontSize: 18 }}>{t.icon}</span>
+        <span>{t.label}</span>
+      </button>;
+    }
+    const active = tab === t.k;
+    return <button key={t.k} onClick={() => { setTab(t.k); setMobileTab(false); }} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, background: "none", border: "none", color: active ? C.gold : "rgba(255,255,255,0.4)", fontSize: 10, fontWeight: active ? 700 : 400, cursor: "pointer", fontFamily: "inherit", padding: "8px 4px" }}>
+      <span style={{ fontSize: 18 }}>{t.icon}</span>
+      <span>{t.label}</span>
+    </button>;
+  })}
+</div>
+{mobileTab && <div className="mobile-nav" style={{ display: "none", position: "fixed", bottom: 64, left: 0, right: 0, background: "#060e1a", borderTop: "1px solid rgba(201,162,39,0.15)", zIndex: 9998, padding: "8px" }}>
+  {[
+    { k: "comparaison", icon: "↔", label: "Comparaison" },
+    { k: "performances", icon: "★", label: "Performances" },
+    { k: "fonds", icon: "≡", label: "Fonds" },
+    { k: "import", icon: "↑", label: "Import CSV" },
+  ].map(t => <button key={t.k} onClick={() => { setTab(t.k); setMobileTab(false); }} style={{ display: "flex", width: "100%", alignItems: "center", gap: 10, padding: "12px 14px", background: tab === t.k ? "rgba(201,162,39,0.15)" : "transparent", border: "none", borderRadius: 8, color: tab === t.k ? C.gold : "rgba(255,255,255,0.6)", fontSize: 13, fontWeight: tab === t.k ? 700 : 400, cursor: "pointer", fontFamily: "inherit", marginBottom: 2 }}>
+    <span style={{ fontSize: 16 }}>{t.icon}</span>{t.label}
+  </button>)}
+</div>}
+ {} <div style={{
       display: "flex",
       minHeight: "100vh",
       alignItems: "stretch"
-    }}> {} <div style={{
+    }}> {} <div className="sidebar-desktop" style={{
         width: 190,
         flexShrink: 0,
         background: "linear-gradient(160deg,#071020 0%,#0a1830 100%)",
@@ -2914,7 +2947,7 @@ const [ucsHistoData, setUcsHistoData] = useState(null);
               color: "rgba(255,255,255,0.3)",
               fontWeight: 400,
               letterSpacing: .2
-            }}>v1.0 · Les Associés</span> </div> </div> </div> {} <div style={{
+            }}>v1.0 · Les Associés</span> </div> </div> </div> {} <div className="main-content" style={{
         flex: 1,
         minWidth: 0,
         padding: "24px 28px 48px",
@@ -2970,7 +3003,7 @@ const [ucsHistoData, setUcsHistoData] = useState(null);
   </div>}
 
   {/* News grid */}
-  {!newsLoading && news.length > 0 && <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: 16 }}>
+  {!newsLoading && news.length > 0 && <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 16 }}>
     {news.filter(n => {
       if (newsCategory === "all") return true;
       const text = ((n.title || "") + " " + (n.text || "") + " " + (n.symbol || "")).toLowerCase();
@@ -5145,7 +5178,7 @@ const [ucsHistoData, setUcsHistoData] = useState(null);
                   fontSize: 11
                 }}> <option value="">Tous marchés</option> {MARCHES.map(m => <option key={m}>{m}</option>)} </select> </div> </div> {} <div style={{
               display: "grid",
-              gridTemplateColumns: "repeat(4,1fr)",
+              gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
               gap: 10,
               marginBottom: 20
             }}> {[{
@@ -5631,7 +5664,7 @@ const [ucsHistoData, setUcsHistoData] = useState(null);
           </label>
         </div>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 12, marginBottom: 12 }}>
         {[
           { key: "nom", label: "Nom du produit", placeholder: "Ex: Athéna CAC 40 Mars 2025" },
           { key: "emetteur", label: "Émetteur", placeholder: "Ex: BNP Paribas, SG, Natixis..." },
@@ -5758,7 +5791,7 @@ const [ucsHistoData, setUcsHistoData] = useState(null);
   if (!quote) return null;
   return <div style={{ marginBottom: 16 }}>
     <div style={{ fontSize: 12, fontWeight: 700, color: C.navy, marginBottom: 10 }}>Données en temps réel</div>
-    <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10 }}>
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10 }}>
       <div style={{ padding: 14, borderRadius: 10, background: C.bgSub, border: "1px solid " + C.borderGold, textAlign: "center" }}>
         <div style={{ fontSize: 9, fontWeight: 700, color: C.textDim, textTransform: "uppercase", letterSpacing: .5, marginBottom: 4 }}>Cours sous-jacent</div>
         <div style={{ fontSize: 20, fontWeight: 800, color: C.navy }}>{quote.price.toLocaleString("fr-FR", { maximumFractionDigits: 2 })}</div>
@@ -5805,7 +5838,7 @@ const [ucsHistoData, setUcsHistoData] = useState(null);
 
           return <div>
             {/* Stats row */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10, marginBottom: 16 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10, marginBottom: 16 }}>
               {[
                 { l: "Dernière VL sous-jacent", v: last.close.toFixed(2), c: C.gold },
                 { l: "Performance", v: (perf >= 0 ? "+" : "") + perf.toFixed(2) + "%", c: perf >= 0 ? C.green : C.red },
@@ -5888,7 +5921,7 @@ const [ucsHistoData, setUcsHistoData] = useState(null);
 
 {(!results || !results.alloc || !results.alloc.length) && savedPortfolios.length === 0 && <div style={{ ...card, padding: 40, textAlign: "center" }}> <div style={{ fontSize: 48, marginBottom: 12 }}>📁</div> <div style={{ fontSize: 16, fontWeight: 700, color: C.navy, marginBottom: 6 }}>Aucun portefeuille enregistré</div> <div style={{ fontSize: 13, color: C.textDim, marginBottom: 16 }}>Créez une allocation dans l'onglet Allocation puis revenez ici pour l'enregistrer</div> <button onClick={() => setTab("allocation")} style={{ padding: "10px 24px", borderRadius: 10, border: "none", background: "linear-gradient(135deg," + C.navy + "," + C.navyL + ")", color: C.gold, fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>Aller à l'allocation</button> </div>}
 
-{savedPortfolios.length > 0 && <div> <div style={{ fontSize: 14, fontWeight: 800, color: C.navy, marginBottom: 14, display: "flex", alignItems: "center", gap: 8 }}> <span style={{ fontSize: 16 }}>♥</span> Portefeuilles favoris <span style={{ fontSize: 11, fontWeight: 500, color: C.textDim, marginLeft: 4 }}>({savedPortfolios.length})</span> </div> <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(360px, 1fr))", gap: 16 }}> {savedPortfolios.map(p => { const avgSri = p.alloc.length ? (p.alloc.reduce((s, f) => s + f.sri * f.pct, 0) / 100).toFixed(1) : "—"; const hasAlert = alertThresholds[p.id] !== undefined; return <div key={p.id} style={{ ...card, padding: 0, overflow: "hidden", transition: "box-shadow .2s", position: "relative" }} className="hov">
+{savedPortfolios.length > 0 && <div> <div style={{ fontSize: 14, fontWeight: 800, color: C.navy, marginBottom: 14, display: "flex", alignItems: "center", gap: 8 }}> <span style={{ fontSize: 16 }}>♥</span> Portefeuilles favoris <span style={{ fontSize: 11, fontWeight: 500, color: C.textDim, marginLeft: 4 }}>({savedPortfolios.length})</span> </div> <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 16 }}> {savedPortfolios.map(p => { const avgSri = p.alloc.length ? (p.alloc.reduce((s, f) => s + f.sri * f.pct, 0) / 100).toFixed(1) : "—"; const hasAlert = alertThresholds[p.id] !== undefined; return <div key={p.id} style={{ ...card, padding: 0, overflow: "hidden", transition: "box-shadow .2s", position: "relative" }} className="hov">
 <div style={{ padding: "16px 18px", background: "linear-gradient(135deg," + C.navy + "," + C.navyL + ")", color: "#fff", position: "relative" }}> <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}> <div> <div style={{ fontSize: 15, fontWeight: 800, color: C.gold, marginBottom: 3 }}>{p.name}</div> <div style={{ fontSize: 10, color: "rgba(255,255,255,0.5)" }}>{new Date(p.date).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}</div> </div> <div style={{ display: "flex", gap: 4 }}> {hasAlert && <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 12, background: "rgba(239,68,68,0.2)", color: "#fca5a5", fontWeight: 700, border: "1px solid rgba(239,68,68,0.3)" }}>🔔 -{Math.abs(alertThresholds[p.id])}%</span>} </div> </div> <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}> <span style={{ padding: "3px 10px", borderRadius: 20, background: "rgba(201,162,39,0.2)", color: C.gold, fontSize: 10, fontWeight: 700 }}>SRI {p.sri} · {RLABEL[p.sri]}</span> <span style={{ padding: "3px 10px", borderRadius: 20, background: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)", fontSize: 10, fontWeight: 600 }}>{p.alloc.length} fonds</span> <span style={{ padding: "3px 10px", borderRadius: 20, background: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)", fontSize: 10, fontWeight: 600 }}>SRI moy. {avgSri}</span> {p.montant && <span style={{ padding: "3px 10px", borderRadius: 20, background: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)", fontSize: 10, fontWeight: 600 }}>{p.montant.toLocaleString("fr-FR")} €</span>} </div> </div>
 
 <div style={{ padding: "12px 18px" }}> {p.alloc.slice(0, 5).map((f, i) => <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "6px 0", borderBottom: i < Math.min(p.alloc.length, 5) - 1 ? "1px solid " + C.border : "none" }}> <div style={{ display: "flex", alignItems: "center", gap: 8, flex: 1, minWidth: 0 }}> <div style={{ width: 8, height: 8, borderRadius: 2, background: PALETTE[i % PALETTE.length], flexShrink: 0 }} /> <span style={{ fontSize: 12, fontWeight: 500, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.nom}</span> </div> <span style={{ fontSize: 12, fontWeight: 800, color: C.gold, flexShrink: 0, marginLeft: 8 }}>{f.pct}%</span> </div>)} {p.alloc.length > 5 && <div style={{ fontSize: 11, color: C.textDim, textAlign: "center", padding: "6px 0" }}>+ {p.alloc.length - 5} autres fonds</div>} </div>
