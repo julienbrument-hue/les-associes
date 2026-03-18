@@ -2502,34 +2502,30 @@ export default function App() {
             display: "flex",
             alignItems: "center",
             gap: 12
-          }}> <div style={{
-              width: 38,
-              height: 38,
-              borderRadius: 10,
-              background: "linear-gradient(135deg,#c9a227,#d4b84a)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              flexShrink: 0,
-              boxShadow: "0 4px 12px rgba(201,162,39,0.35)"
-            }}> <span style={{
-                fontFamily: "'Inter',system-ui,sans-serif",
-                fontSize: 16,
+          }}> <div> <div style={{
+                fontSize: 18,
                 fontWeight: 800,
-                color: "#060e1a",
-                lineHeight: 1
-              }}>A</span> </div> <div> <div style={{
-                fontSize: 14,
-                fontWeight: 700,
-                color: "#ffffff",
-                letterSpacing: .1,
-                lineHeight: 1.2
-              }}>Les Associés</div> <div style={{
-                fontSize: 10,
-                color: "rgba(201,162,39,0.7)",
-                letterSpacing: .3,
+                color: "#c9a227",
+                letterSpacing: 1.5,
+                lineHeight: 1,
+                fontFamily: "'Inter',system-ui,sans-serif",
+                textTransform: "uppercase"
+              }}>LES</div> <div style={{
+                fontSize: 18,
+                fontWeight: 800,
+                color: "#c9a227",
+                letterSpacing: 1.5,
+                lineHeight: 1,
                 marginTop: 2,
-                fontWeight: 400
+                fontFamily: "'Inter',system-ui,sans-serif",
+                textTransform: "uppercase"
+              }}>ASSOCIÉS</div> <div style={{
+                fontSize: 8,
+                color: "rgba(255,255,255,0.35)",
+                letterSpacing: 2,
+                marginTop: 6,
+                fontWeight: 500,
+                textTransform: "uppercase"
               }}>Moteur d'allocation</div> </div> </div> </div> {} <nav style={{
           flex: 1,
           padding: "16px 10px",
