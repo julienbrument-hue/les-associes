@@ -1236,6 +1236,7 @@ const [ucsForm, setUcsForm] = useState(null);
 const [ucsHistoLoading, setUcsHistoLoading] = useState(false);
 const [ucsHistoData, setUcsHistoData] = useState(null);
   const [ucsUploading, setUcsUploading] = useState(false);
+  const [ucsLiveQuotes, setUcsLiveQuotes] = useState({});
   const [buildSearch, setBuildSearch] = useState("");
   const [addToPortfolioFund, setAddToPortfolioFund] = useState(null);
   const [alertThresholds, setAlertThresholds] = useState(() => {
@@ -2498,7 +2499,7 @@ const [ucsHistoData, setUcsHistoData] = useState(null);
     } catch(e) {}
     setUcsHistoLoading(false);
   }
-  function exportUcsPDF(product, histoData) {
+  function exportUcsPDF(product, histoData, liveQuote) {
     const pts = histoData || [];
     const lastPrice = pts.length > 0 ? pts[pts.length - 1].close : null;
     const firstPrice = pts.length > 0 ? pts[0].close : null;
@@ -2549,6 +2550,11 @@ const [ucsHistoData, setUcsHistoData] = useState(null);
       "<div class='stat'><div class='stat-label'>Plus haut</div><div class='stat-val'>" + (maxPrice ? maxPrice.toFixed(2) : "\u2014") + "</div></div>" +
       "<div class='stat'><div class='stat-label'>Plus bas</div><div class='stat-val'>" + (minPrice ? minPrice.toFixed(2) : "\u2014") + "</div></div>" +
       "</div></div>" : "") +
+      (liveQuote ? "<div class='card'><div class='stitle'>⚡ Données en temps réel</div><div class='grid' style='grid-template-columns:repeat(3,1fr)'>" +
+      "<div class='stat'><div class='stat-label'>Cours sous-jacent</div><div class='stat-val'>" + liveQuote.price.toLocaleString("fr-FR", { maximumFractionDigits: 2 }) + "</div><div style='font-size:10px;color:" + (liveQuote.changePercentage >= 0 ? "#0a5c34" : "#8b1a1a") + ";margin-top:2px'>" + (liveQuote.changePercentage >= 0 ? "+" : "") + liveQuote.changePercentage.toFixed(2) + "% aujourd'hui</div></div>" +
+      (product.niveauInitial ? "<div class='stat'><div class='stat-label'>Niveau initial (strike)</div><div class='stat-val'>" + parseFloat(product.niveauInitial).toLocaleString("fr-FR") + "</div><div style='font-size:10px;color:" + (liveQuote.price >= parseFloat(product.niveauInitial) ? "#0a5c34" : "#8b1a1a") + ";margin-top:2px'>" + ((liveQuote.price / parseFloat(product.niveauInitial) - 1) * 100).toFixed(2) + "% vs strike</div></div>" : "") +
+      (() => { const vlCalc = calcUcsVL(product, liveQuote.price); const vlDisplay = product.vlManuelle ? parseFloat(product.vlManuelle) : (vlCalc ? vlCalc.vl : null); return vlDisplay ? "<div class='stat'><div class='stat-label'>Valeur liquidative" + (product.vlManuelle ? "" : " (est.)") + "</div><div class='stat-val' style='color:#c9a227'>" + vlDisplay.toLocaleString("fr-FR", { maximumFractionDigits: 2 }) + " €</div>" + (vlCalc ? "<div style='font-size:10px;color:" + vlCalc.color + ";margin-top:2px'>" + vlCalc.label + "</div>" : "") + "</div>" : ""; })() +
+      "</div></div>" : "") +
       (histoRows ? "<div class='card'><div class='stitle'>\uD83D\uDCC8 Historique des valeurs</div><table><thead><tr><th style='text-align:left'>Date</th><th>Cl\u00f4ture</th><th>Plus haut</th><th>Plus bas</th><th>Volume</th></tr></thead><tbody>" + histoRows + "</tbody></table></div>" : "") +
       "<div style='background:#fffbeb;border:1px solid rgba(201,162,39,.25);border-radius:10px;padding:12px 16px;font-size:11px;color:#78350f;line-height:1.6'>\u26A0\uFE0F Ce document est fourni \u00e0 titre informatif uniquement. Les performances pass\u00e9es ne pr\u00e9jugent pas des performances futures. Document non contractuel.</div>" +
       "<div class='footer'>Les Associ\u00e9s \u00b7 Reporting UCS \u00b7 www.les-associes.fr \u00b7 Document non contractuel</div>" +
@@ -2565,6 +2571,49 @@ const [ucsHistoData, setUcsHistoData] = useState(null);
       setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
     } catch(e) {}
   }
+  function calcUcsVL(product, currentPrice) {
+    if (!product.niveauInitial || !currentPrice) return null;
+    const strike = parseFloat(product.niveauInitial);
+    if (!strike || strike <= 0) return null;
+    const nominal = parseFloat(product.valeurNominale) || 1000;
+    const ratio = currentPrice / strike;
+    const barriereStr = (product.barriere || "").replace(/[^0-9.-]/g, "");
+    const barrierePct = barriereStr ? Math.abs(parseFloat(barriereStr)) / 100 : 0.4;
+    const barriereLevel = strike * (1 - barrierePct);
+    if (currentPrice >= strike) {
+      return { vl: nominal, status: "gain", label: "Au-dessus du strike", color: "#0a5c34" };
+    } else if (currentPrice >= barriereLevel) {
+      const loss = (1 - ratio) * 0.3;
+      return { vl: Math.round(nominal * (1 - loss) * 100) / 100, status: "watch", label: "Entre strike et barrière", color: "#b87820" };
+    } else {
+      return { vl: Math.round(nominal * ratio * 100) / 100, status: "risk", label: "Sous la barrière", color: "#8b1a1a" };
+    }
+  }
+  async function fetchUcsLiveQuote(symbol) {
+    if (!symbol) return null;
+    try {
+      const res = await fetch('/api/fmp?path=/stable/quote&symbol=' + encodeURIComponent(symbol));
+      if (!res.ok) return null;
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) return data[0];
+    } catch(e) {}
+    return null;
+  }
+  async function refreshUcsQuotes() {
+    const symbols = [...new Set(ucsProducts.filter(p => p.soujacentSymbol).map(p => p.soujacentSymbol))];
+    const quotes = {};
+    await Promise.allSettled(symbols.map(async sym => {
+      const q = await fetchUcsLiveQuote(sym);
+      if (q) quotes[sym] = q;
+    }));
+    setUcsLiveQuotes(quotes);
+  }
+  useEffect(() => {
+    if (ucsProducts.length === 0) return;
+    refreshUcsQuotes();
+    const interval = setInterval(refreshUcsQuotes, 60000);
+    return () => clearInterval(interval);
+  }, [ucsProducts.length]);
   async function extractUcsFromPDF(file) {
     setUcsUploading(true);
     try {
@@ -5558,7 +5607,7 @@ const [ucsHistoData, setUcsHistoData] = useState(null);
 
   {/* Add / Edit form */}
   <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>
-    <button onClick={() => setUcsForm({ id: "", nom: "", emetteur: "", sousjacent: "", soujacentSymbol: "", isin: "", dateLancement: "", dateEcheance: "", coupon: "", barriere: "", frequence: "Trimestrielle", type: "Autocall", description: "", valeurNominale: "1000" })} style={{ padding: "10px 24px", borderRadius: 10, border: "none", background: "linear-gradient(135deg," + C.navy + "," + C.navyL + ")", color: C.gold, fontWeight: 800, fontSize: 13, cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 8 }}>✚ Nouveau produit UCS</button>
+    <button onClick={() => setUcsForm({ id: "", nom: "", emetteur: "", sousjacent: "", soujacentSymbol: "", isin: "", dateLancement: "", dateEcheance: "", coupon: "", barriere: "", frequence: "Trimestrielle", type: "Autocall", description: "", valeurNominale: "1000", niveauInitial: "", vlManuelle: "" })} style={{ padding: "10px 24px", borderRadius: 10, border: "none", background: "linear-gradient(135deg," + C.navy + "," + C.navyL + ")", color: C.gold, fontWeight: 800, fontSize: 13, cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 8 }}>✚ Nouveau produit UCS</button>
   </div>
 
   {/* Form modal */}
@@ -5596,6 +5645,8 @@ const [ucsHistoData, setUcsHistoData] = useState(null);
           { key: "barriere", label: "Barrière de protection", placeholder: "Ex: -40%, 60% du strike..." },
           { key: "frequence", label: "Fréquence de constatation", placeholder: "Trimestrielle, Semestrielle..." },
           { key: "valeurNominale", label: "Valeur nominale (€)", placeholder: "1000" },
+          { key: "niveauInitial", label: "Niveau initial (strike)", placeholder: "Ex: 7500 (CAC 40 au lancement)" },
+          { key: "vlManuelle", label: "Valeur liquidative actuelle (€)", placeholder: "VL officielle émetteur si connue" },
         ].map(field => <div key={field.key}>
           <div style={{ fontSize: 10, fontWeight: 700, color: C.textDim, textTransform: "uppercase", letterSpacing: .6, marginBottom: 4 }}>{field.label}</div>
           <input value={ucsForm[field.key] || ""} onChange={e => setUcsForm(prev => ({ ...prev, [field.key]: e.target.value }))} placeholder={field.placeholder} style={inp} />
@@ -5643,6 +5694,43 @@ const [ucsHistoData, setUcsHistoData] = useState(null);
           {p.frequence && <span style={{ padding: "3px 10px", borderRadius: 20, background: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)", fontSize: 10, fontWeight: 600 }}>{p.frequence}</span>}
           {p.valeurNominale && <span style={{ padding: "3px 10px", borderRadius: 20, background: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)", fontSize: 10, fontWeight: 600 }}>Nominal: {parseFloat(p.valeurNominale).toLocaleString("fr-FR")} €</span>}
         </div>
+{/* Live data strip */}
+{(() => {
+  const quote = ucsLiveQuotes[p.soujacentSymbol];
+  const vlCalc = quote ? calcUcsVL(p, quote.price) : null;
+  const vlDisplay = p.vlManuelle ? parseFloat(p.vlManuelle) : (vlCalc ? vlCalc.vl : null);
+  if (!quote && !p.vlManuelle) return null;
+  return <div style={{ display: "flex", gap: 12, marginTop: 14, padding: "10px 14px", borderRadius: 10, background: "rgba(0,0,0,0.2)" }}>
+    {quote && <div style={{ flex: 1 }}>
+      <div style={{ fontSize: 8, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: .8 }}>Sous-jacent</div>
+      <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginTop: 2 }}>
+        <span style={{ fontSize: 18, fontWeight: 800, color: "#fff" }}>{quote.price.toLocaleString("fr-FR", { maximumFractionDigits: 2 })}</span>
+        <span style={{ fontSize: 11, fontWeight: 700, color: quote.changePercentage >= 0 ? "#4ade80" : "#f87171" }}>{quote.changePercentage >= 0 ? "▲" : "▼"} {Math.abs(quote.changePercentage).toFixed(2)}%</span>
+      </div>
+    </div>}
+    {vlDisplay && <div style={{ flex: 1 }}>
+      <div style={{ fontSize: 8, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: .8 }}>Valeur liquidative{p.vlManuelle ? "" : " (est.)"}</div>
+      <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginTop: 2 }}>
+        <span style={{ fontSize: 18, fontWeight: 800, color: C.gold }}>{vlDisplay.toLocaleString("fr-FR", { maximumFractionDigits: 2 })} €</span>
+        {vlCalc && <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 10, background: vlCalc.color + "30", color: vlCalc.color === "#0a5c34" ? "#4ade80" : vlCalc.color === "#b87820" ? "#fbbf24" : "#f87171", fontWeight: 700 }}>{vlCalc.label}</span>}
+      </div>
+    </div>}
+    {quote && p.niveauInitial && <div style={{ flex: 1 }}>
+      <div style={{ fontSize: 8, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: .8 }}>Distance barrière</div>
+      {(() => {
+        const strike = parseFloat(p.niveauInitial);
+        const barriereStr = (p.barriere || "").replace(/[^0-9.-]/g, "");
+        const barrierePct = barriereStr ? Math.abs(parseFloat(barriereStr)) / 100 : 0.4;
+        const barriereLevel = strike * (1 - barrierePct);
+        const distPct = ((quote.price - barriereLevel) / barriereLevel * 100);
+        return <div style={{ marginTop: 2 }}>
+          <span style={{ fontSize: 18, fontWeight: 800, color: distPct > 20 ? "#4ade80" : distPct > 5 ? "#fbbf24" : "#f87171" }}>{distPct > 0 ? "+" : ""}{distPct.toFixed(1)}%</span>
+          <div style={{ fontSize: 9, color: "rgba(255,255,255,0.4)", marginTop: 2 }}>Barrière à {barriereLevel.toFixed(0)}</div>
+        </div>;
+      })()}
+    </div>}
+  </div>;
+})()}
       </div>
 
       {/* Description */}
@@ -5660,7 +5748,49 @@ const [ucsHistoData, setUcsHistoData] = useState(null);
         </div>}
 
         {/* Reporting data */}
-        {!ucsHistoLoading && ucsHistoData && ucsHistoData.length > 0 && (() => {
+{/* Live quote + VL */}
+{(() => {
+  const quote = ucsLiveQuotes[p.soujacentSymbol];
+  const vlCalc = quote ? calcUcsVL(p, quote.price) : null;
+  const vlDisplay = p.vlManuelle ? parseFloat(p.vlManuelle) : (vlCalc ? vlCalc.vl : null);
+  const nominal = parseFloat(p.valeurNominale) || 1000;
+  const perfVL = vlDisplay ? ((vlDisplay / nominal - 1) * 100) : null;
+  if (!quote) return null;
+  return <div style={{ marginBottom: 16 }}>
+    <div style={{ fontSize: 12, fontWeight: 700, color: C.navy, marginBottom: 10 }}>Données en temps réel</div>
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10 }}>
+      <div style={{ padding: 14, borderRadius: 10, background: C.bgSub, border: "1px solid " + C.borderGold, textAlign: "center" }}>
+        <div style={{ fontSize: 9, fontWeight: 700, color: C.textDim, textTransform: "uppercase", letterSpacing: .5, marginBottom: 4 }}>Cours sous-jacent</div>
+        <div style={{ fontSize: 20, fontWeight: 800, color: C.navy }}>{quote.price.toLocaleString("fr-FR", { maximumFractionDigits: 2 })}</div>
+        <div style={{ fontSize: 11, fontWeight: 700, color: quote.changePercentage >= 0 ? C.green : C.red, marginTop: 2 }}>{quote.changePercentage >= 0 ? "▲" : "▼"} {Math.abs(quote.changePercentage).toFixed(2)}% aujourd'hui</div>
+      </div>
+      <div style={{ padding: 14, borderRadius: 10, background: C.bgSub, border: "1px solid " + C.borderGold, textAlign: "center" }}>
+        <div style={{ fontSize: 9, fontWeight: 700, color: C.textDim, textTransform: "uppercase", letterSpacing: .5, marginBottom: 4 }}>Valeur liquidative{p.vlManuelle ? "" : " (est.)"}</div>
+        <div style={{ fontSize: 20, fontWeight: 800, color: C.gold }}>{vlDisplay ? vlDisplay.toLocaleString("fr-FR", { maximumFractionDigits: 2 }) + " €" : "—"}</div>
+        {perfVL !== null && <div style={{ fontSize: 11, fontWeight: 700, color: perfVL >= 0 ? C.green : C.red, marginTop: 2 }}>{perfVL >= 0 ? "+" : ""}{perfVL.toFixed(2)}% vs nominal</div>}
+      </div>
+      {p.niveauInitial && <div style={{ padding: 14, borderRadius: 10, background: C.bgSub, border: "1px solid " + C.borderGold, textAlign: "center" }}>
+        <div style={{ fontSize: 9, fontWeight: 700, color: C.textDim, textTransform: "uppercase", letterSpacing: .5, marginBottom: 4 }}>Niveau initial (strike)</div>
+        <div style={{ fontSize: 20, fontWeight: 800, color: C.navy }}>{parseFloat(p.niveauInitial).toLocaleString("fr-FR")}</div>
+        <div style={{ fontSize: 11, fontWeight: 700, color: quote.price >= parseFloat(p.niveauInitial) ? C.green : C.red, marginTop: 2 }}>{((quote.price / parseFloat(p.niveauInitial) - 1) * 100).toFixed(2)}% vs strike</div>
+      </div>}
+      {p.niveauInitial && <div style={{ padding: 14, borderRadius: 10, background: C.bgSub, border: "1px solid " + (vlCalc && vlCalc.status === "risk" ? "rgba(139,26,26,0.3)" : C.borderGold), textAlign: "center" }}>
+        <div style={{ fontSize: 9, fontWeight: 700, color: C.textDim, textTransform: "uppercase", letterSpacing: .5, marginBottom: 4 }}>Statut produit</div>
+        {vlCalc && <><div style={{ fontSize: 16, fontWeight: 800, color: vlCalc.color }}>{vlCalc.label}</div>
+        {(() => {
+          const strike = parseFloat(p.niveauInitial);
+          const barriereStr = (p.barriere || "").replace(/[^0-9.-]/g, "");
+          const barrierePct = barriereStr ? Math.abs(parseFloat(barriereStr)) / 100 : 0.4;
+          const barriereLevel = strike * (1 - barrierePct);
+          const distPct = ((quote.price - barriereLevel) / barriereLevel * 100);
+          return <div style={{ fontSize: 11, color: C.textDim, marginTop: 2 }}>Distance barrière: <strong style={{ color: distPct > 20 ? C.green : distPct > 5 ? "#b87820" : C.red }}>{distPct > 0 ? "+" : ""}{distPct.toFixed(1)}%</strong></div>;
+        })()}</>}
+        {!vlCalc && <div style={{ fontSize: 14, color: C.textDim }}>Renseignez le niveau initial</div>}
+      </div>}
+    </div>
+  </div>;
+})()}
+                {!ucsHistoLoading && ucsHistoData && ucsHistoData.length > 0 && (() => {
           const pts = ucsHistoData;
           const last = pts[pts.length - 1];
           const first = pts[0];
@@ -5741,7 +5871,7 @@ const [ucsHistoData, setUcsHistoData] = useState(null);
 
         {/* Actions */}
         <div style={{ display: "flex", gap: 8, marginTop: 16, paddingTop: 16, borderTop: "1px solid " + C.border }}>
-          <button onClick={() => exportUcsPDF(p, ucsHistoData)} style={{ padding: "10px 20px", borderRadius: 8, border: "none", background: "linear-gradient(135deg," + C.gold + "," + C.goldL + ")", color: C.navy, fontWeight: 800, fontSize: 12, cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 6 }}>↓ Export PDF</button>
+          <button onClick={() => exportUcsPDF(p, ucsHistoData, ucsLiveQuotes[p.soujacentSymbol])} style={{ padding: "10px 20px", borderRadius: 8, border: "none", background: "linear-gradient(135deg," + C.gold + "," + C.goldL + ")", color: C.navy, fontWeight: 800, fontSize: 12, cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 6 }}>↓ Export PDF</button>
           <button onClick={() => setUcsForm(p)} style={{ padding: "10px 16px", borderRadius: 8, border: "1px solid " + C.borderGold, background: C.bgCard, color: C.textMid, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Modifier</button>
           <button onClick={() => { if(confirm("Supprimer ce produit ?")) deleteUcsProduct(p.id); }} style={{ padding: "10px 16px", borderRadius: 8, border: "1px solid rgba(153,27,27,0.2)", background: "rgba(153,27,27,0.04)", color: C.red, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Supprimer</button>
         </div>
