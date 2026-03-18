@@ -2568,15 +2568,20 @@ const [ucsHistoData, setUcsHistoData] = useState(null);
   async function extractUcsFromPDF(file) {
     setUcsUploading(true);
     try {
+      if (file.size > 4 * 1024 * 1024) {
+        throw new Error('Fichier trop volumineux (max 4 Mo). Essayez avec une image ou un PDF plus léger.');
+      }
       const base64 = await new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = () => resolve(reader.result.split(',')[1]);
         reader.onerror = reject;
         reader.readAsDataURL(file);
       });
-      const mediaType = file.type === 'application/pdf' ? 'application/pdf'
-        : file.type.startsWith('image/') ? file.type
-        : 'application/pdf';
+      const isPDF = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+      const mediaType = isPDF ? 'application/pdf' : (file.type || 'image/png');
+      const contentBlock = isPDF
+        ? { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: base64 } }
+        : { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } };
       const res = await fetch('/api/claude', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -2586,20 +2591,20 @@ const [ucsHistoData, setUcsHistoData] = useState(null);
           messages: [{
             role: 'user',
             content: [
-              {
-                type: mediaType === 'application/pdf' ? 'document' : 'image',
-                source: { type: 'base64', media_type: mediaType, data: base64 }
-              },
+              contentBlock,
               {
                 type: 'text',
-                text: "Tu es un expert en produits structurés. Analyse ce document (term sheet ou brochure) et extrais les informations. Réponds UNIQUEMENT en JSON strict sans markdown :" +
-                  '{"nom":"nom complet du produit","emetteur":"émetteur/banque","sousjacent":"sous-jacent","soujacentSymbol":"symbole FMP (^FCHI pour CAC 40, ^GSPC pour S&P 500, ^STOXX50E pour Euro Stoxx 50)","isin":"code ISIN","type":"type (Autocall, Phoenix, Reverse...)","dateLancement":"JJ/MM/AAAA","dateEcheance":"JJ/MM/AAAA","coupon":"rendement/coupon","barriere":"barrière de protection","frequence":"fréquence de constatation","valeurNominale":"valeur nominale euros","description":"mécanisme du produit en 2-3 phrases"}'
+                text: "Tu es un expert en produits structurés (autocall, phoenix, etc). Analyse ce document (term sheet ou brochure commerciale) et extrais TOUTES les informations du produit. Pour le symbole FMP du sous-jacent, utilise ces correspondances exactes : CAC 40 = ^FCHI, Euro Stoxx 50 = ^STOXX50E, S&P 500 = ^GSPC, Nasdaq 100 = ^NDX, Nikkei 225 = ^N225, DAX = ^GDAXI, FTSE 100 = ^FTSE. Pour une action individuelle, utilise le ticker (ex: AAPL, MSFT, TTE.PA pour Total). Pour un panier ou indice inconnu, laisse vide. Réponds UNIQUEMENT en JSON strict, sans markdown, sans commentaire :" +
+                  '{"nom":"nom complet du produit","emetteur":"émetteur ou banque","sousjacent":"nom du sous-jacent","soujacentSymbol":"symbole FMP exact","isin":"code ISIN si présent","type":"Autocall/Phoenix/Reverse Convertible/etc","dateLancement":"JJ/MM/AAAA","dateEcheance":"JJ/MM/AAAA","coupon":"ex: 8% par an","barriere":"ex: -40% ou 60% du niveau initial","frequence":"Trimestrielle/Semestrielle/Annuelle/etc","valeurNominale":"montant en euros","description":"description du mécanisme en 2-3 phrases"}'
               }
             ]
           }]
         })
       });
-      if (!res.ok) throw new Error('HTTP ' + res.status);
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error ? errData.error.message : 'Erreur API ' + res.status);
+      }
       const d = await res.json();
       const txt = d.content && d.content[0] && d.content[0].text || '';
       const clean = txt.replace(/```json|```/g, '').trim();
