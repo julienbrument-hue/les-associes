@@ -1235,6 +1235,7 @@ const [ucsSelected, setUcsSelected] = useState(null);
 const [ucsForm, setUcsForm] = useState(null);
 const [ucsHistoLoading, setUcsHistoLoading] = useState(false);
 const [ucsHistoData, setUcsHistoData] = useState(null);
+  const [ucsUploading, setUcsUploading] = useState(false);
   const [buildSearch, setBuildSearch] = useState("");
   const [addToPortfolioFund, setAddToPortfolioFund] = useState(null);
   const [alertThresholds, setAlertThresholds] = useState(() => {
@@ -2563,6 +2564,60 @@ const [ucsHistoData, setUcsHistoData] = useState(null);
       a.click();
       setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
     } catch(e) {}
+  }
+  async function extractUcsFromPDF(file) {
+    setUcsUploading(true);
+    try {
+      const base64 = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result.split(',')[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+      const mediaType = file.type === 'application/pdf' ? 'application/pdf'
+        : file.type.startsWith('image/') ? file.type
+        : 'application/pdf';
+      const res = await fetch('/api/claude', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 4000,
+          messages: [{
+            role: 'user',
+            content: [
+              {
+                type: mediaType === 'application/pdf' ? 'document' : 'image',
+                source: { type: 'base64', media_type: mediaType, data: base64 }
+              },
+              {
+                type: 'text',
+                text: "Tu es un expert en produits structurés. Analyse ce document (term sheet ou brochure) et extrais les informations. Réponds UNIQUEMENT en JSON strict sans markdown :" +
+                  '{"nom":"nom complet du produit","emetteur":"émetteur/banque","sousjacent":"sous-jacent","soujacentSymbol":"symbole FMP (^FCHI pour CAC 40, ^GSPC pour S&P 500, ^STOXX50E pour Euro Stoxx 50)","isin":"code ISIN","type":"type (Autocall, Phoenix, Reverse...)","dateLancement":"JJ/MM/AAAA","dateEcheance":"JJ/MM/AAAA","coupon":"rendement/coupon","barriere":"barrière de protection","frequence":"fréquence de constatation","valeurNominale":"valeur nominale euros","description":"mécanisme du produit en 2-3 phrases"}'
+              }
+            ]
+          }]
+        })
+      });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const d = await res.json();
+      const txt = d.content && d.content[0] && d.content[0].text || '';
+      const clean = txt.replace(/```json|```/g, '').trim();
+      const parsed = JSON.parse(clean.slice(clean.indexOf('{'), clean.lastIndexOf('}') + 1));
+      setUcsForm(prev => {
+        const updated = { ...prev };
+        Object.keys(parsed).forEach(k => {
+          if (parsed[k] && parsed[k] !== '—' && parsed[k] !== 'N/A' && parsed[k] !== '') {
+            updated[k] = parsed[k];
+          }
+        });
+        return updated;
+      });
+    } catch(e) {
+      console.error('UCS extraction error:', e);
+      alert('Erreur lors de extraction : ' + e.message);
+    }
+    setUcsUploading(false);
   }
   function createEmptyPortfolio(name) {
     if (!name.trim()) return;
@@ -5507,6 +5562,21 @@ const [ucsHistoData, setUcsHistoData] = useState(null);
       <div style={{ fontSize: 15, fontWeight: 800, color: C.gold }}>{ucsForm.id ? "Modifier le produit" : "Nouveau produit UCS"}</div>
     </div>
     <div style={{ padding: 20 }}>
+      {/* Upload zone */}
+      <div style={{ marginBottom: 16, padding: 16, borderRadius: 12, border: "2px dashed " + C.borderGold, background: C.bgSub, textAlign: "center" }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: C.navy, marginBottom: 6 }}>📄 Importer une Term Sheet ou Brochure</div>
+        <div style={{ fontSize: 11, color: C.textDim, marginBottom: 10 }}>Uploadez un PDF ou une image — Claude IA extraira automatiquement les informations</div>
+        <div style={{ display: "flex", gap: 8, justifyContent: "center" }}>
+          <label style={{ padding: "9px 20px", borderRadius: 8, border: "none", background: "linear-gradient(135deg," + C.gold + "," + C.goldL + ")", color: C.navy, fontWeight: 800, fontSize: 12, cursor: ucsUploading ? "wait" : "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 6, opacity: ucsUploading ? 0.6 : 1 }}>
+            {ucsUploading ? <><Spin />Extraction en cours...</> : "📄 Term Sheet (PDF)"}
+            <input type="file" accept=".pdf,image/*" style={{ display: "none" }} onChange={e => { if (e.target.files[0] && !ucsUploading) extractUcsFromPDF(e.target.files[0]); e.target.value = ''; }} />
+          </label>
+          <label style={{ padding: "9px 20px", borderRadius: 8, border: "1.5px solid " + C.borderGold, background: C.bgCard, color: C.textMid, fontWeight: 600, fontSize: 12, cursor: ucsUploading ? "wait" : "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 6, opacity: ucsUploading ? 0.6 : 1 }}>
+            {ucsUploading ? "Patientez..." : "📋 Brochure commerciale"}
+            <input type="file" accept=".pdf,image/*" style={{ display: "none" }} onChange={e => { if (e.target.files[0] && !ucsUploading) extractUcsFromPDF(e.target.files[0]); e.target.value = ''; }} />
+          </label>
+        </div>
+      </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
         {[
           { key: "nom", label: "Nom du produit", placeholder: "Ex: Athéna CAC 40 Mars 2025" },
