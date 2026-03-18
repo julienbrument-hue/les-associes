@@ -20,7 +20,7 @@ const RISK_COLOR = {
 const DUREES = ["< 3 ans", "3-5 ans", "5-8 ans", "8-10 ans", "> 10 ans"];
 const MARCHES_GROUPES = [{
   groupe: "Actions",
-  couleur: "#1a3560",
+  couleur: "#0e2040",
   items: ["Actions Europe", "Actions France", "Actions US", "Actions Amérique latine", "Actions Asie-Pacifique", "Actions Japon", "Actions Marchés émergents", "Actions Monde", "Actions Secteur technologie", "Actions Secteur santé", "Actions Secteur énergie", "Actions Secteur financier", "Actions Small & Mid Cap"]
 }, {
   groupe: "Obligations",
@@ -46,15 +46,15 @@ const MARCHES_GROUPES = [{
 const MARCHES = MARCHES_GROUPES.flatMap(g => g.items);
 const COMPAGNIES = ["SwissLife", "GGVie", "Nortia", "LM", "Allianz", "AXA", "Cardif", "SPVIE", "Generali", "MMA", "CT", "AG2R", "Corum", "VIE Plus", "PEA", "La Mondiale", "Garance", "Spirica"];
 const PIE = ["#c9a227", "#3b82f6", "#10b981", "#ef4444", "#8b5cf6", "#06b6d4", "#f97316", "#ec4899", "#14b8a6", "#a855f7"];
-const NAV = "#0f2340",
-  NAVL = "#1a3560",
+const NAV = "#081225",
+  NAVL = "#0e2040",
   GOLD = "#c9a227",
   GOLDF = "#f1f5f9";
 const gCard = {
   background: "#fff",
   borderRadius: 12,
-  border: "1px solid rgba(12,28,53,0.07)",
-  boxShadow: "0 1px 3px rgba(12,28,53,0.04),0 4px 16px rgba(12,28,53,0.04)"
+  border: "1px solid rgba(6,14,26,0.07)",
+  boxShadow: "0 1px 3px rgba(6,14,26,0.04),0 4px 16px rgba(6,14,26,0.04)"
 };
 const gInp = {
   padding: "10px 14px",
@@ -572,7 +572,7 @@ function Spinner() {
   return <div className="spin" style={{
     width: 14,
     height: 14,
-    border: "2px solid rgba(15,35,64,0.15)",
+    border: "2px solid rgba(8,18,37,0.15)",
     borderTopColor: GOLD,
     borderRadius: "50%",
     display: "inline-block"
@@ -1153,7 +1153,7 @@ function MarketTicker() {
   }, []);
   if (loading) return null;
   const items = [...indices, ...indices];
-  return <div style={{ background: 'linear-gradient(90deg, #0c1c35, #132d54)', overflow: 'hidden', whiteSpace: 'nowrap', position: 'relative', height: 36, display: 'flex', alignItems: 'center', borderBottom: '1px solid rgba(201,162,39,0.15)', zIndex: 200, flexShrink: 0 }}>
+  return <div style={{ background: 'linear-gradient(90deg, #060e1a, #0a1830)', overflow: 'hidden', whiteSpace: 'nowrap', position: 'relative', height: 36, display: 'flex', alignItems: 'center', borderBottom: '1px solid rgba(201,162,39,0.15)', zIndex: 200, flexShrink: 0 }}>
     <div style={{ display: 'inline-flex', animation: 'tickerScroll ' + (indices.length * 4) + 's linear infinite', gap: 0 }}>
       {items.map((idx, i) => {
         const up = idx.change >= 0;
@@ -1740,15 +1740,15 @@ export default function App() {
       var annCells = ann.map(function (v) {
         return "<td style='padding:4px 5px;text-align:center;white-space:nowrap'><span style='padding:2px 5px;border-radius:4px;font-size:10px;font-weight:700;background:" + pb(v) + ";color:" + pc(v) + "'>" + (v >= 0 ? "+" : "") + v.toFixed(1) + "%</span></td>";
       }).join("");
-      return "<tr style='border-bottom:1px solid #f0ece0;background:" + (fi % 2 === 0 ? "#fff" : "#f8fafc") + "'>" + "<td style='padding:8px 12px'>" + "<div style='display:flex;align-items:center;gap:8px'>" + "<div style='width:10px;height:10px;border-radius:3px;background:" + PIE[fi % PIE.length] + ";flex-shrink:0'></div>" + "<div>" + "<div style='font-weight:700;font-size:12px;color:#0f2340'>" + f.nom + "</div>" + "<div style='font-size:10px;color:#8292a8;margin-top:1px'>" + (f.soc || "") + (f.marche ? " · " + f.marche : "") + "</div>" + "</div>" + "</div>" + "</td>" + "<td style='padding:8px;text-align:center'>" + "<span style='background:" + RISK_COLOR[f.sri] + "22;color:" + RISK_COLOR[f.sri] + ";padding:2px 8px;border-radius:8px;font-weight:700;font-size:11px'>SRI " + f.sri + "</span>" + "</td>" + "<td style='padding:8px;text-align:center'>" + "<span style='background:" + roleBg + ";color:" + roleCol + ";padding:2px 7px;border-radius:6px;font-weight:800;font-size:9px;letter-spacing:.5px;text-transform:uppercase'>" + role + "</span>" + "</td>" + "<td style='padding:8px;text-align:right;font-weight:800;color:#c9a227;font-size:14px'>" + f.pct + "%</td>" + (results.montant ? "<td style='padding:8px;text-align:right;font-weight:600;font-size:12px;color:#0f2340'>" + Math.round(results.montant * f.pct / 100).toLocaleString("fr-FR") + " €</td>" : "") + annCells + "<td style='padding:8px;text-align:center'><span style='padding:3px 8px;border-radius:6px;font-weight:800;font-size:11px;background:" + pb(tot) + ";color:" + pc(tot) + "'>" + (tot >= 0 ? "+" : "") + tot.toFixed(1) + "%</span></td>" + "</tr>";
+      return "<tr style='border-bottom:1px solid #f0ece0;background:" + (fi % 2 === 0 ? "#fff" : "#f8fafc") + "'>" + "<td style='padding:8px 12px'>" + "<div style='display:flex;align-items:center;gap:8px'>" + "<div style='width:10px;height:10px;border-radius:3px;background:" + PIE[fi % PIE.length] + ";flex-shrink:0'></div>" + "<div>" + "<div style='font-weight:700;font-size:12px;color:#081225'>" + f.nom + "</div>" + "<div style='font-size:10px;color:#8292a8;margin-top:1px'>" + (f.soc || "") + (f.marche ? " · " + f.marche : "") + "</div>" + "</div>" + "</div>" + "</td>" + "<td style='padding:8px;text-align:center'>" + "<span style='background:" + RISK_COLOR[f.sri] + "22;color:" + RISK_COLOR[f.sri] + ";padding:2px 8px;border-radius:8px;font-weight:700;font-size:11px'>SRI " + f.sri + "</span>" + "</td>" + "<td style='padding:8px;text-align:center'>" + "<span style='background:" + roleBg + ";color:" + roleCol + ";padding:2px 7px;border-radius:6px;font-weight:800;font-size:9px;letter-spacing:.5px;text-transform:uppercase'>" + role + "</span>" + "</td>" + "<td style='padding:8px;text-align:right;font-weight:800;color:#c9a227;font-size:14px'>" + f.pct + "%</td>" + (results.montant ? "<td style='padding:8px;text-align:right;font-weight:600;font-size:12px;color:#081225'>" + Math.round(results.montant * f.pct / 100).toLocaleString("fr-FR") + " €</td>" : "") + annCells + "<td style='padding:8px;text-align:center'><span style='padding:3px 8px;border-radius:6px;font-weight:800;font-size:11px;background:" + pb(tot) + ";color:" + pc(tot) + "'>" + (tot >= 0 ? "+" : "") + tot.toFixed(1) + "%</span></td>" + "</tr>";
     }).join("");
     var yrsHeader = [];
     for (var y = yr - 9; y <= yr; y++) yrsHeader.push(y);
-    var html = "<!DOCTYPE html><html><head><meta charset='UTF-8'>" + "<title>Allocation Les Associés — " + new Date().toLocaleDateString("fr-FR") + "</title>" + "<style>" + "{box-sizing:border-box;margin:0;padding:0}" + "body{font-family:'Segoe UI',system-ui,sans-serif;background:#ede8da;color:#0f2340}" + ".wrap{max-width:1200px;margin:0 auto;padding:28px 24px}" + ".card{background:#fff;border-radius:14px;padding:26px;margin-bottom:18px;box-shadow:0 2px 16px rgba(15,35,64,0.07);border:1px solid rgba(201,162,39,0.12)}" + ".hdr{background:linear-gradient(135deg,#0f2340,#1a3560);border-radius:14px;padding:26px 30px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;position:relative;overflow:hidden}" + ".hdr::after{content:'';position:absolute;width:240px;height:240px;border-radius:50%;background:rgba(201,162,39,0.06);right:-60px;top:-60px}" + ".hdr::before{content:'';position:absolute;width:160px;height:160px;border-radius:50%;background:rgba(201,162,39,0.04);right:70px;bottom:-80px}" + ".logo{font-family:Georgia,serif;font-size:24px;font-weight:700;color:#c9a227}" + ".logo-sub{font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:rgba(255,255,255,0.4);margin-top:4px}" + ".stitle{font-size:14px;font-weight:700;color:#0f2340;margin-bottom:16px;padding-left:10px;border-left:3px solid #c9a227}" + ".profil{display:flex;gap:0;border-radius:12px;overflow:hidden;margin-bottom:0}" + ".p-item{flex:1;padding:14px 18px;background:#f1f5f9;border-right:1px solid rgba(201,162,39,0.15)}" + ".p-item:last-child{border-right:none}" + ".p-label{font-size:9px;font-weight:700;color:#8292a8;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px}" + ".p-val{font-size:14px;font-weight:700;color:#0f2340}" + "table{width:100%;border-collapse:collapse}" + "th{padding:9px 8px;font-size:9px;font-weight:700;color:#8292a8;text-transform:uppercase;letter-spacing:.8px;border-bottom:2px solid rgba(201,162,39,0.2);text-align:center;background:#f1f5f9;white-space:nowrap}" + "th:first-child{text-align:left;padding-left:12px}" + ".synthese{background:linear-gradient(135deg,#fff9ec,#fffef5);border-left:4px solid #c9a227;padding:16px 20px;border-radius:0 12px 12px 0;margin-bottom:0;line-height:1.8}" + ".disc{background:#fffbeb;border:1px solid rgba(201,162,39,0.25);border-radius:10px;padding:12px 16px;font-size:11px;color:#78350f;margin-top:0;line-height:1.6}" + ".footer{text-align:center;font-size:10px;color:#8292a8;padding:16px 0 8px;border-top:1px solid rgba(201,162,39,0.2);margin-top:4px}" + "@media print{body{background:#fff}.wrap{padding:0}.card{box-shadow:none;page-break-inside:avoid}}" + "</style></head><body><div class='wrap'>" + "<div class='hdr'>" + "<div style='position:relative;z-index:1'>" + "<div class='logo'>Les Associés</div>" + "<div class='logo-sub'>Proposition d'allocation d'actifs</div>" + "</div>" + "<div style='position:relative;z-index:1;text-align:right'>" + "<div style='color:#c9a227;font-weight:600;font-size:13px'>" + new Date().toLocaleDateString("fr-FR", {
+    var html = "<!DOCTYPE html><html><head><meta charset='UTF-8'>" + "<title>Allocation Les Associés — " + new Date().toLocaleDateString("fr-FR") + "</title>" + "<style>" + "{box-sizing:border-box;margin:0;padding:0}" + "body{font-family:'Segoe UI',system-ui,sans-serif;background:#ede8da;color:#081225}" + ".wrap{max-width:1200px;margin:0 auto;padding:28px 24px}" + ".card{background:#fff;border-radius:14px;padding:26px;margin-bottom:18px;box-shadow:0 2px 16px rgba(8,18,37,0.07);border:1px solid rgba(201,162,39,0.12)}" + ".hdr{background:linear-gradient(135deg,#081225,#0e2040);border-radius:14px;padding:26px 30px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;position:relative;overflow:hidden}" + ".hdr::after{content:'';position:absolute;width:240px;height:240px;border-radius:50%;background:rgba(201,162,39,0.06);right:-60px;top:-60px}" + ".hdr::before{content:'';position:absolute;width:160px;height:160px;border-radius:50%;background:rgba(201,162,39,0.04);right:70px;bottom:-80px}" + ".logo{font-family:Georgia,serif;font-size:24px;font-weight:700;color:#c9a227}" + ".logo-sub{font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:rgba(255,255,255,0.4);margin-top:4px}" + ".stitle{font-size:14px;font-weight:700;color:#081225;margin-bottom:16px;padding-left:10px;border-left:3px solid #c9a227}" + ".profil{display:flex;gap:0;border-radius:12px;overflow:hidden;margin-bottom:0}" + ".p-item{flex:1;padding:14px 18px;background:#f1f5f9;border-right:1px solid rgba(201,162,39,0.15)}" + ".p-item:last-child{border-right:none}" + ".p-label{font-size:9px;font-weight:700;color:#8292a8;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px}" + ".p-val{font-size:14px;font-weight:700;color:#081225}" + "table{width:100%;border-collapse:collapse}" + "th{padding:9px 8px;font-size:9px;font-weight:700;color:#8292a8;text-transform:uppercase;letter-spacing:.8px;border-bottom:2px solid rgba(201,162,39,0.2);text-align:center;background:#f1f5f9;white-space:nowrap}" + "th:first-child{text-align:left;padding-left:12px}" + ".synthese{background:linear-gradient(135deg,#fff9ec,#fffef5);border-left:4px solid #c9a227;padding:16px 20px;border-radius:0 12px 12px 0;margin-bottom:0;line-height:1.8}" + ".disc{background:#fffbeb;border:1px solid rgba(201,162,39,0.25);border-radius:10px;padding:12px 16px;font-size:11px;color:#78350f;margin-top:0;line-height:1.6}" + ".footer{text-align:center;font-size:10px;color:#8292a8;padding:16px 0 8px;border-top:1px solid rgba(201,162,39,0.2);margin-top:4px}" + "@media print{body{background:#fff}.wrap{padding:0}.card{box-shadow:none;page-break-inside:avoid}}" + "</style></head><body><div class='wrap'>" + "<div class='hdr'>" + "<div style='position:relative;z-index:1'>" + "<div class='logo'>Les Associés</div>" + "<div class='logo-sub'>Proposition d'allocation d'actifs</div>" + "</div>" + "<div style='position:relative;z-index:1;text-align:right'>" + "<div style='color:#c9a227;font-weight:600;font-size:13px'>" + new Date().toLocaleDateString("fr-FR", {
       day: "2-digit",
       month: "long",
       year: "numeric"
-    }) + "</div>" + "<div style='color:rgba(255,255,255,0.35);font-size:11px;margin-top:3px'>www.les-associes.fr</div>" + "<div style='margin-top:10px;display:inline-block;background:rgba(201,162,39,0.18);border:1px solid rgba(201,162,39,0.35);border-radius:8px;padding:5px 14px;color:#c9a227;font-size:12px;font-weight:700'>" + results.alloc.length + " fonds · SRI moyen " + avgSri + "</div>" + "</div>" + "</div>" + "<div class='card'>" + "<div class='stitle'>👤 Profil client</div>" + "<div class='profil'>" + "<div class='p-item'><div class='p-label'>Profil de risque</div><div class='p-val'>SRI " + sri + " — " + RISK_LABEL[sri] + "</div></div>" + "<div class='p-item'><div class='p-label'>SRI moyen portefeuille</div><div class='p-val' style='color:#c9a227'>" + avgSri + " <span style='font-size:11px;color:#166534;font-weight:700'>✓ cible</span></div></div>" + "<div class='p-item'><div class='p-label'>Durée</div><div class='p-val'>" + duree + "</div></div>" + (compagnie ? "<div class='p-item'><div class='p-label'>Compagnie</div><div class='p-val'>" + compagnie + "</div></div>" : "") + (results.montant ? "<div class='p-item'><div class='p-label'>Montant</div><div class='p-val'>" + results.montant.toLocaleString("fr-FR") + " €</div></div>" : "") + (marches && marches.length ? "<div class='p-item'><div class='p-label'>Marchés</div><div class='p-val' style='font-size:11px'>" + marches.join(", ") + "</div></div>" : "") + "</div>" + "</div>" + (ai && ai.synthese ? "<div class='card'><div class='stitle'>🧠 Analyse IA — Synthèse</div><div class='synthese'><span style='font-size:13px;color:#0f2340'>" + ai.synthese + "</span></div></div>" : "") + (ai && ai.fonds && ai.fonds.length ? "<div class='card'>" + "<div class='stitle'>🔍 Analyse détaillée par fonds</div>" + "<div style='display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px'>" + results.alloc.map(function (f, i) {
+    }) + "</div>" + "<div style='color:rgba(255,255,255,0.35);font-size:11px;margin-top:3px'>www.les-associes.fr</div>" + "<div style='margin-top:10px;display:inline-block;background:rgba(201,162,39,0.18);border:1px solid rgba(201,162,39,0.35);border-radius:8px;padding:5px 14px;color:#c9a227;font-size:12px;font-weight:700'>" + results.alloc.length + " fonds · SRI moyen " + avgSri + "</div>" + "</div>" + "</div>" + "<div class='card'>" + "<div class='stitle'>👤 Profil client</div>" + "<div class='profil'>" + "<div class='p-item'><div class='p-label'>Profil de risque</div><div class='p-val'>SRI " + sri + " — " + RISK_LABEL[sri] + "</div></div>" + "<div class='p-item'><div class='p-label'>SRI moyen portefeuille</div><div class='p-val' style='color:#c9a227'>" + avgSri + " <span style='font-size:11px;color:#166534;font-weight:700'>✓ cible</span></div></div>" + "<div class='p-item'><div class='p-label'>Durée</div><div class='p-val'>" + duree + "</div></div>" + (compagnie ? "<div class='p-item'><div class='p-label'>Compagnie</div><div class='p-val'>" + compagnie + "</div></div>" : "") + (results.montant ? "<div class='p-item'><div class='p-label'>Montant</div><div class='p-val'>" + results.montant.toLocaleString("fr-FR") + " €</div></div>" : "") + (marches && marches.length ? "<div class='p-item'><div class='p-label'>Marchés</div><div class='p-val' style='font-size:11px'>" + marches.join(", ") + "</div></div>" : "") + "</div>" + "</div>" + (ai && ai.synthese ? "<div class='card'><div class='stitle'>🧠 Analyse IA — Synthèse</div><div class='synthese'><span style='font-size:13px;color:#081225'>" + ai.synthese + "</span></div></div>" : "") + (ai && ai.fonds && ai.fonds.length ? "<div class='card'>" + "<div class='stitle'>🔍 Analyse détaillée par fonds</div>" + "<div style='display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px'>" + results.alloc.map(function (f, i) {
       var ana = ai.fonds.find(function (a) {
         return a.isin === f.isin;
       }) || ai.fonds[i];
@@ -1756,12 +1756,12 @@ export default function App() {
       var role = f.sri < sri ? "DÉFENSIF" : f.sri > sri ? "MOTEUR" : "CŒUR";
       var roleBg = f.sri < sri ? "#f0fdf4" : f.sri > sri ? "#fef2f2" : "#fffbeb";
       var roleCol = f.sri < sri ? "#166534" : f.sri > sri ? "#991b1b" : "#92400e";
-      return "<div style='border-radius:12px;border:1px solid rgba(201,162,39,0.15);overflow:hidden'>" + "<div style='padding:12px 14px;background:#f1f5f9;border-bottom:1px solid rgba(201,162,39,0.12);display:flex;align-items:center;gap:10px'>" + "<div style='width:4px;height:36px;border-radius:2px;background:" + PIE[i % PIE.length] + ";flex-shrink:0'></div>" + "<div style='flex:1;min-width:0'>" + "<div style='font-weight:700;font-size:13px;color:#0f2340;overflow:hidden;text-overflow:ellipsis;white-space:nowrap'>" + f.nom + "</div>" + "<div style='display:flex;gap:5px;margin-top:3px;align-items:center'>" + "<span style='background:" + RISK_COLOR[f.sri] + "22;color:" + RISK_COLOR[f.sri] + ";padding:1px 7px;border-radius:8px;font-weight:700;font-size:10px'>SRI " + f.sri + "</span>" + "<span style='background:" + roleBg + ";color:" + roleCol + ";padding:1px 6px;border-radius:6px;font-weight:800;font-size:9px;text-transform:uppercase'>" + role + "</span>" + "</div>" + "</div>" + "<div style='font-size:20px;font-weight:800;color:#c9a227;flex-shrink:0'>" + f.pct + "%</div>" + "</div>" + "<div style='padding:12px 14px;background:#fff;display:flex;flex-direction:column;gap:8px'>" + (ana.role ? "<div style='padding:8px 12px;background:#eff6ff;border-radius:8px;border-left:3px solid #1a3560'><div style='font-size:9px;font-weight:700;color:#1e40af;text-transform:uppercase;letter-spacing:.8px;margin-bottom:3px'>Rôle</div><div style='font-size:12px;font-weight:600;color:#0f2340'>" + ana.role + "</div></div>" : "") + (ana.pourquoi ? "<div style='padding:8px 12px;background:#f8fafc;border-radius:8px'><div style='font-size:9px;font-weight:700;color:#8292a8;text-transform:uppercase;letter-spacing:.8px;margin-bottom:3px'>Pourquoi maintenant ?</div><div style='font-size:12px;color:#0f2340;line-height:1.6'>" + ana.pourquoi + "</div></div>" : "") + (ana.vigilance ? "<div style='padding:8px 12px;background:#fffbeb;border-radius:8px;border-left:3px solid #c9a227'><div style='font-size:9px;font-weight:700;color:#92400e;text-transform:uppercase;letter-spacing:.8px;margin-bottom:3px'>⚠ Vigilance</div><div style='font-size:12px;color:#78350f;line-height:1.6'>" + ana.vigilance + "</div></div>" : "") + "</div>" + "</div>";
+      return "<div style='border-radius:12px;border:1px solid rgba(201,162,39,0.15);overflow:hidden'>" + "<div style='padding:12px 14px;background:#f1f5f9;border-bottom:1px solid rgba(201,162,39,0.12);display:flex;align-items:center;gap:10px'>" + "<div style='width:4px;height:36px;border-radius:2px;background:" + PIE[i % PIE.length] + ";flex-shrink:0'></div>" + "<div style='flex:1;min-width:0'>" + "<div style='font-weight:700;font-size:13px;color:#081225;overflow:hidden;text-overflow:ellipsis;white-space:nowrap'>" + f.nom + "</div>" + "<div style='display:flex;gap:5px;margin-top:3px;align-items:center'>" + "<span style='background:" + RISK_COLOR[f.sri] + "22;color:" + RISK_COLOR[f.sri] + ";padding:1px 7px;border-radius:8px;font-weight:700;font-size:10px'>SRI " + f.sri + "</span>" + "<span style='background:" + roleBg + ";color:" + roleCol + ";padding:1px 6px;border-radius:6px;font-weight:800;font-size:9px;text-transform:uppercase'>" + role + "</span>" + "</div>" + "</div>" + "<div style='font-size:20px;font-weight:800;color:#c9a227;flex-shrink:0'>" + f.pct + "%</div>" + "</div>" + "<div style='padding:12px 14px;background:#fff;display:flex;flex-direction:column;gap:8px'>" + (ana.role ? "<div style='padding:8px 12px;background:#eff6ff;border-radius:8px;border-left:3px solid #0e2040'><div style='font-size:9px;font-weight:700;color:#1e40af;text-transform:uppercase;letter-spacing:.8px;margin-bottom:3px'>Rôle</div><div style='font-size:12px;font-weight:600;color:#081225'>" + ana.role + "</div></div>" : "") + (ana.pourquoi ? "<div style='padding:8px 12px;background:#f8fafc;border-radius:8px'><div style='font-size:9px;font-weight:700;color:#8292a8;text-transform:uppercase;letter-spacing:.8px;margin-bottom:3px'>Pourquoi maintenant ?</div><div style='font-size:12px;color:#081225;line-height:1.6'>" + ana.pourquoi + "</div></div>" : "") + (ana.vigilance ? "<div style='padding:8px 12px;background:#fffbeb;border-radius:8px;border-left:3px solid #c9a227'><div style='font-size:9px;font-weight:700;color:#92400e;text-transform:uppercase;letter-spacing:.8px;margin-bottom:3px'>⚠ Vigilance</div><div style='font-size:12px;color:#78350f;line-height:1.6'>" + ana.vigilance + "</div></div>" : "") + "</div>" + "</div>";
     }).join("") + "</div>" + "</div>" : "") + "<div class='card'>" + "<div class='stitle'>🍩 Répartition du portefeuille</div>" + "<div style='display:flex;align-items:center;gap:32px'>" + "<img src='" + donutSrc + "' style='width:160px;height:160px;flex-shrink:0'/>" + "<div style='flex:1;display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px'>" + results.alloc.map(function (f, i) {
       var role = f.sri < sri ? "DÉFENSIF" : f.sri > sri ? "MOTEUR" : "CŒUR";
       var roleBg = f.sri < sri ? "#f0fdf4" : f.sri > sri ? "#fef2f2" : "#fffbeb";
       var roleCol = f.sri < sri ? "#166534" : f.sri > sri ? "#991b1b" : "#92400e";
-      return "<div style='display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px;background:#f1f5f9'>" + "<div style='width:12px;height:36px;border-radius:3px;background:" + PIE[i % PIE.length] + ";flex-shrink:0'></div>" + "<div style='flex:1;min-width:0'>" + "<div style='font-weight:700;font-size:12px;color:#0f2340;white-space:nowrap;overflow:hidden;text-overflow:ellipsis'>" + f.nom + "</div>" + "<div style='display:flex;gap:4px;margin-top:3px;align-items:center'>" + "<span style='background:" + RISK_COLOR[f.sri] + "22;color:" + RISK_COLOR[f.sri] + ";padding:1px 6px;border-radius:8px;font-weight:700;font-size:10px'>SRI " + f.sri + "</span>" + "<span style='background:" + roleBg + ";color:" + roleCol + ";padding:1px 6px;border-radius:6px;font-weight:800;font-size:9px;text-transform:uppercase'>" + role + "</span>" + "</div>" + "</div>" + "<div style='font-size:18px;font-weight:800;color:#c9a227'>" + f.pct + "%</div>" + "</div>";
+      return "<div style='display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px;background:#f1f5f9'>" + "<div style='width:12px;height:36px;border-radius:3px;background:" + PIE[i % PIE.length] + ";flex-shrink:0'></div>" + "<div style='flex:1;min-width:0'>" + "<div style='font-weight:700;font-size:12px;color:#081225;white-space:nowrap;overflow:hidden;text-overflow:ellipsis'>" + f.nom + "</div>" + "<div style='display:flex;gap:4px;margin-top:3px;align-items:center'>" + "<span style='background:" + RISK_COLOR[f.sri] + "22;color:" + RISK_COLOR[f.sri] + ";padding:1px 6px;border-radius:8px;font-weight:700;font-size:10px'>SRI " + f.sri + "</span>" + "<span style='background:" + roleBg + ";color:" + roleCol + ";padding:1px 6px;border-radius:6px;font-weight:800;font-size:9px;text-transform:uppercase'>" + role + "</span>" + "</div>" + "</div>" + "<div style='font-size:18px;font-weight:800;color:#c9a227'>" + f.pct + "%</div>" + "</div>";
     }).join("") + "</div>" + "</div>" + "</div>" + "<div class='card'>" + "<div class='stitle'>📈 Performances simulées sur 10 ans</div>" + "<div style='overflow-x:auto'>" + "<table>" + "<thead><tr>" + "<th style='text-align:left;padding-left:12px;min-width:160px'>Fonds</th>" + "<th style='min-width:60px'>Risque</th>" + "<th style='min-width:60px'>Rôle</th>" + "<th style='min-width:55px;color:#c9a227'>Alloc.</th>" + (results.montant ? "<th style='min-width:80px'>Montant</th>" : "") + yrsHeader.map(function (y) {
       return "<th style='min-width:52px'>" + y + "</th>";
     }).join("") + "<th style='min-width:60px;color:#c9a227'>10 ans</th>" + "</tr></thead>" + "<tbody>" + perfRows + "</tbody>" + "</table>" + "</div>" + "</div>" + "<div class='disc'>⚠️ <strong>Avertissement :</strong> Les performances présentées sont des simulations indicatives basées sur le profil de risque (SRI) de chaque fonds. Elles ne constituent pas des données historiques réelles et ne préjugent pas des performances futures. Tout investissement comporte un risque de perte en capital. Document à usage interne — non contractuel.</div>" + "<div class='footer'>Les Associés · Réseau de courtiers en assurance · www.les-associes.fr · Document non contractuel</div>" + "</div></body></html>";
@@ -1821,25 +1821,25 @@ export default function App() {
     bgSub: "#f8f9fa",
     bgCard: "#ffffff",
     bgCardHover: "#fafbfc",
-    navy: "#0c1c35",
-    navyL: "#16305a",
-    navyXL: "#1e3d70",
+    navy: "#060e1a",
+    navyL: "#0c1a35",
+    navyXL: "#122550",
     gold: "#c9a227",
     goldL: "#d4b84a",
     goldXL: "#fdf9ed",
     goldDim: "#a07e20",
-    border: "rgba(12,28,53,0.06)",
+    border: "rgba(6,14,26,0.06)",
     borderGold: "rgba(201,162,39,0.22)",
-    text: "#0c1c35",
+    text: "#060e1a",
     textMid: "#2d3f5c",
     textDim: "#6b7c93",
     green: "#0a5c34",
     greenBg: "#edfaf3",
     red: "#8b1a1a",
     redBg: "#fef1f1",
-    shadow: "0 1px 2px rgba(12,28,53,0.03), 0 4px 12px rgba(12,28,53,0.03)",
-    shadowMd: "0 2px 6px rgba(12,28,53,0.04), 0 8px 24px rgba(12,28,53,0.04)",
-    shadowLg: "0 4px 20px rgba(12,28,53,0.08), 0 1px 4px rgba(12,28,53,0.04)",
+    shadow: "0 1px 2px rgba(6,14,26,0.03), 0 4px 12px rgba(6,14,26,0.03)",
+    shadowMd: "0 2px 6px rgba(6,14,26,0.04), 0 8px 24px rgba(6,14,26,0.04)",
+    shadowLg: "0 4px 20px rgba(6,14,26,0.08), 0 1px 4px rgba(6,14,26,0.04)",
     glow: "0 0 0 3px rgba(201,162,39,0.15)"
   };
   const RC = {
@@ -1860,17 +1860,17 @@ export default function App() {
     6: "Offensif",
     7: "Très offensif"
   };
-  const PALETTE = ["#c9a227", "#16305a", "#0a5c34", "#8b1a1a", "#6d28d9", "#0e6b8a", "#b54309", "#9d174d", "#065f46", "#1e40af"];
+  const PALETTE = ["#c9a227", "#0c1a35", "#0a5c34", "#8b1a1a", "#6d28d9", "#0e6b8a", "#b54309", "#9d174d", "#065f46", "#1e40af"];
   const card = {
     background: C.bgCard,
     borderRadius: 12,
-    border: "1px solid rgba(12,28,53,0.07)",
-    boxShadow: "0 1px 3px rgba(12,28,53,0.04), 0 4px 16px rgba(12,28,53,0.04)"
+    border: "1px solid rgba(6,14,26,0.07)",
+    boxShadow: "0 1px 3px rgba(6,14,26,0.04), 0 4px 16px rgba(6,14,26,0.04)"
   };
   const inp = {
     padding: "10px 14px",
     borderRadius: 10,
-    border: "1.5px solid rgba(12,28,53,0.12)",
+    border: "1.5px solid rgba(6,14,26,0.12)",
     background: "#ffffff",
     color: C.text,
     fontSize: 13,
@@ -1883,7 +1883,7 @@ export default function App() {
   const sel = {
     padding: "9px 12px",
     borderRadius: 10,
-    border: "1.5px solid rgba(12,28,53,0.12)",
+    border: "1.5px solid rgba(6,14,26,0.12)",
     background: "#ffffff",
     color: C.text,
     fontSize: 12,
@@ -2479,14 +2479,14 @@ export default function App() {
     minHeight: "100vh",
     fontFamily: "'Inter',system-ui,sans-serif",
     color: C.text
-  }}> <style>{` @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap'); @keyframes spin{to{transform:rotate(360deg)}} @keyframes tickerScroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}} @keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}} @keyframes slideIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:none}} .fu{animation:fadeUp .3s cubic-bezier(.22,1,.36,1) both} .fu1{animation:fadeUp .3s .05s cubic-bezier(.22,1,.36,1) both} .fu2{animation:fadeUp .3s .1s cubic-bezier(.22,1,.36,1) both} .fu3{animation:fadeUp .3s .15s cubic-bezier(.22,1,.36,1) both} .spin{animation:spin .6s linear infinite} button{transition:all .15s} button:hover{opacity:.88;transform:translateY(-1px)} input::placeholder{color:#9ca3af} select option{background:#fff;color:#0c1c35} ::-webkit-scrollbar{width:4px;height:4px} ::-webkit-scrollbar-track{background:transparent} ::-webkit-scrollbar-thumb{background:rgba(12,28,53,.12);border-radius:2px} .hov:hover{background:#f8f9fa!important;box-shadow:0 2px 12px rgba(12,28,53,0.08)!important} input:focus{border-color:rgba(201,162,39,0.5)!important;box-shadow:0 0 0 3px rgba(201,162,39,0.1)!important} `}</style> <MarketTicker /> {} <div style={{
+  }}> <style>{` @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap'); @keyframes spin{to{transform:rotate(360deg)}} @keyframes tickerScroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}} @keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}} @keyframes slideIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:none}} .fu{animation:fadeUp .3s cubic-bezier(.22,1,.36,1) both} .fu1{animation:fadeUp .3s .05s cubic-bezier(.22,1,.36,1) both} .fu2{animation:fadeUp .3s .1s cubic-bezier(.22,1,.36,1) both} .fu3{animation:fadeUp .3s .15s cubic-bezier(.22,1,.36,1) both} .spin{animation:spin .6s linear infinite} button{transition:all .15s} button:hover{opacity:.88;transform:translateY(-1px)} input::placeholder{color:#9ca3af} select option{background:#fff;color:#060e1a} ::-webkit-scrollbar{width:4px;height:4px} ::-webkit-scrollbar-track{background:transparent} ::-webkit-scrollbar-thumb{background:rgba(6,14,26,.12);border-radius:2px} .hov:hover{background:#f8f9fa!important;box-shadow:0 2px 12px rgba(6,14,26,0.08)!important} input:focus{border-color:rgba(201,162,39,0.5)!important;box-shadow:0 0 0 3px rgba(201,162,39,0.1)!important} `}</style> <MarketTicker /> {} <div style={{
       display: "flex",
       minHeight: "100vh",
       alignItems: "stretch"
     }}> {} <div style={{
         width: 190,
         flexShrink: 0,
-        background: "linear-gradient(160deg,#0e1f3d 0%,#132d54 100%)",
+        background: "linear-gradient(160deg,#071020 0%,#0a1830 100%)",
         display: "flex",
         flexDirection: "column",
         position: "sticky",
@@ -2494,7 +2494,7 @@ export default function App() {
         height: "calc(100vh - 36px)",
         overflowY: "auto",
         zIndex: 100,
-        borderRight: "1px solid rgba(12,28,53,0.06)"
+        borderRight: "1px solid rgba(6,14,26,0.06)"
       }}> {} <div style={{
           padding: "24px 20px 20px",
           borderBottom: "1px solid rgba(255,255,255,0.07)"
@@ -2516,7 +2516,7 @@ export default function App() {
                 fontFamily: "'Inter',system-ui,sans-serif",
                 fontSize: 16,
                 fontWeight: 800,
-                color: "#0c1c35",
+                color: "#060e1a",
                 lineHeight: 1
               }}>A</span> </div> <div> <div style={{
                 fontSize: 14,
@@ -2558,7 +2558,7 @@ export default function App() {
               borderRadius: 8,
               border: "none",
               background: a ? "#c9a227" : "transparent",
-              color: a ? "#0c1c35" : "rgba(255,255,255,0.55)",
+              color: a ? "#060e1a" : "rgba(255,255,255,0.55)",
               fontWeight: a ? 700 : 400,
               fontSize: 13,
               cursor: "pointer",
@@ -2806,12 +2806,12 @@ export default function App() {
                   padding: "13px",
                   borderRadius: 12,
                   border: "none",
-                  background: loading ? C.bgSub : "linear-gradient(135deg,#0c1c35 0%,#16305a 100%)",
+                  background: loading ? C.bgSub : "linear-gradient(135deg,#060e1a 0%,#0c1a35 100%)",
                   color: loading ? C.textDim : "#d4b84a",
                   fontWeight: 600,
                   fontSize: 13,
                   cursor: loading ? "wait" : "pointer",
-                  boxShadow: loading ? "none" : "0 4px 16px rgba(12,28,53,0.25), 0 1px 4px rgba(12,28,53,0.15)",
+                  boxShadow: loading ? "none" : "0 4px 16px rgba(6,14,26,0.25), 0 1px 4px rgba(6,14,26,0.15)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -2886,7 +2886,7 @@ export default function App() {
                       padding: "10px 20px",
                       borderRadius: 10,
                       border: "none",
-                      background: "linear-gradient(135deg,#0c1c35,#16305a)",
+                      background: "linear-gradient(135deg,#060e1a,#0c1a35)",
                       color: "#d4b84a",
                       fontWeight: 500,
                       fontSize: 12,
@@ -2894,7 +2894,7 @@ export default function App() {
                       display: "flex",
                       alignItems: "center",
                       gap: 8,
-                      boxShadow: "0 4px 14px rgba(12,28,53,0.2)",
+                      boxShadow: "0 4px 14px rgba(6,14,26,0.2)",
                       fontFamily: "inherit",
                       letterSpacing: .2
                     }}> ↓ Exporter PDF </button> </div> {} <div style={{
@@ -2906,7 +2906,7 @@ export default function App() {
                       l: "Fonds retenus",
                       v: results.alloc.length + (results.nTarget ? "/" + results.nTarget : ""),
                       c: C.navy,
-                      bg: "rgba(15,35,64,0.07)"
+                      bg: "rgba(8,18,37,0.07)"
                     }, {
                       l: "SRI moyen",
                       v: (results.sriMoyen || results.alloc.reduce((a, f) => a + f.pct / 100 * f.sri, 0)).toFixed(2) + " ✓",
@@ -3078,7 +3078,7 @@ export default function App() {
                               }} /> </div> </div> <Sparkline pts={perf} color={col} /> </div> </div> {isOpen && <div style={{
                         borderTop: "1px solid " + C.borderGold,
                         padding: "14px 16px",
-                        background: "rgba(15,35,64,0.02)"
+                        background: "rgba(8,18,37,0.02)"
                       }}> {f.desc && <div style={{
                           marginBottom: 10,
                           padding: "10px 13px",
@@ -3369,18 +3369,18 @@ export default function App() {
                 const ann = yrsHeader.map((_, i) => (perf[i + 1] / perf[i] - 1) * 100);
                 const tot = (perf[10] / perf[0] - 1) * 100;
                 const annCells = ann.map(v => "<td style='padding:4px 5px;text-align:center'><span style='padding:2px 5px;border-radius:4px;font-size:10px;font-weight:700;background:" + (v >= 0 ? "#f0fdf4" : "#fef2f2") + ";color:" + (v >= 0 ? "#0d6e3e" : "#991b1b") + "'>" + (v >= 0 ? "+" : "") + v.toFixed(1) + "%</span></td>").join("");
-                return "<tr style='border-bottom:1px solid rgba(201,162,39,0.1);background:" + (fi % 2 === 0 ? "#fff" : "#f8fafc") + "'>" + "<td style='padding:8px 10px'><div style='display:flex;align-items:center;gap:7px'><div style='width:10px;height:10px;border-radius:3px;background:" + PALETTE[fi % PALETTE.length] + ";flex-shrink:0'></div><div><div style='font-weight:700;font-size:12px;color:#0f2340'>" + f.nom + "</div><div style='font-size:10px;color:#8292a8'>" + (f.soc || "") + (f.marche ? " · " + f.marche : "") + "</div></div></div></td>" + "<td style='padding:8px;text-align:center'><span style='background:" + RISK_COLOR[f.sri] + "22;color:" + RISK_COLOR[f.sri] + ";padding:2px 8px;border-radius:8px;font-weight:700;font-size:11px'>SRI " + f.sri + "</span></td>" + "<td style='padding:8px;text-align:right;font-weight:800;color:#c9a227;font-size:14px'>" + f.pct + "%</td>" + (manuelMontant ? "<td style='padding:8px;text-align:right;font-size:12px'>" + Math.round(parseFloat(manuelMontant) * f.pct / 100).toLocaleString("fr-FR") + " €</td>" : "") + annCells + "<td style='padding:8px;text-align:center'><span style='padding:3px 8px;border-radius:6px;font-weight:800;font-size:11px;background:" + (tot >= 0 ? "#f0fdf4" : "#fef2f2") + ";color:" + (tot >= 0 ? "#0d6e3e" : "#991b1b") + "'>" + (tot >= 0 ? "+" : "") + tot.toFixed(1) + "%</span></td>" + "</tr>";
+                return "<tr style='border-bottom:1px solid rgba(201,162,39,0.1);background:" + (fi % 2 === 0 ? "#fff" : "#f8fafc") + "'>" + "<td style='padding:8px 10px'><div style='display:flex;align-items:center;gap:7px'><div style='width:10px;height:10px;border-radius:3px;background:" + PALETTE[fi % PALETTE.length] + ";flex-shrink:0'></div><div><div style='font-weight:700;font-size:12px;color:#081225'>" + f.nom + "</div><div style='font-size:10px;color:#8292a8'>" + (f.soc || "") + (f.marche ? " · " + f.marche : "") + "</div></div></div></td>" + "<td style='padding:8px;text-align:center'><span style='background:" + RISK_COLOR[f.sri] + "22;color:" + RISK_COLOR[f.sri] + ";padding:2px 8px;border-radius:8px;font-weight:700;font-size:11px'>SRI " + f.sri + "</span></td>" + "<td style='padding:8px;text-align:right;font-weight:800;color:#c9a227;font-size:14px'>" + f.pct + "%</td>" + (manuelMontant ? "<td style='padding:8px;text-align:right;font-size:12px'>" + Math.round(parseFloat(manuelMontant) * f.pct / 100).toLocaleString("fr-FR") + " €</td>" : "") + annCells + "<td style='padding:8px;text-align:center'><span style='padding:3px 8px;border-radius:6px;font-weight:800;font-size:11px;background:" + (tot >= 0 ? "#f0fdf4" : "#fef2f2") + ";color:" + (tot >= 0 ? "#0d6e3e" : "#991b1b") + "'>" + (tot >= 0 ? "+" : "") + tot.toFixed(1) + "%</span></td>" + "</tr>";
               }).join("");
               const aiBlocks = manuelAi && manuelAi.fonds ? allocForDisplay.map((f, i) => {
                 const ana = (manuelAi.fonds || []).find(a => a.isin === f.isin) || (manuelAi.fonds || [])[i];
                 if (!ana) return "";
-                return "<div style='border-radius:10px;border:1px solid rgba(201,162,39,0.15);overflow:hidden;margin-bottom:10px'>" + "<div style='padding:10px 14px;background:#f1f5f9;border-bottom:1px solid rgba(201,162,39,0.12);display:flex;align-items:center;gap:9px'>" + "<div style='width:4px;height:30px;border-radius:2px;background:" + PALETTE[i % PALETTE.length] + "'></div>" + "<div style='flex:1'><div style='font-weight:700;font-size:13px;color:#0f2340'>" + f.nom + "</div></div>" + "<span style='font-size:14px;font-weight:800;color:#c9a227'>" + f.pct + "%</span></div>" + "<div style='padding:12px 14px;background:#fff;display:flex;flex-direction:column;gap:7px'>" + (ana.role ? "<div style='padding:8px 12px;background:#eff6ff;border-radius:8px;border-left:3px solid #1a3560'><div style='font-size:9px;font-weight:700;color:#1e40af;text-transform:uppercase;margin-bottom:3px'>Rôle</div><div style='font-size:12px;font-weight:600;color:#0f2340'>" + ana.role + "</div></div>" : "") + (ana.pourquoi ? "<div style='padding:8px 12px;background:#f8fafc;border-radius:8px'><div style='font-size:9px;font-weight:700;color:#8292a8;text-transform:uppercase;margin-bottom:3px'>Pourquoi maintenant ?</div><div style='font-size:12px;color:#0f2340;line-height:1.6'>" + ana.pourquoi + "</div></div>" : "") + (ana.vigilance ? "<div style='padding:8px 12px;background:#fffbeb;border-radius:8px;border-left:3px solid #c9a227'><div style='font-size:9px;font-weight:700;color:#92400e;text-transform:uppercase;margin-bottom:3px'>⚠ Vigilance</div><div style='font-size:12px;color:#78350f;line-height:1.6'>" + ana.vigilance + "</div></div>" : "") + "</div></div>";
+                return "<div style='border-radius:10px;border:1px solid rgba(201,162,39,0.15);overflow:hidden;margin-bottom:10px'>" + "<div style='padding:10px 14px;background:#f1f5f9;border-bottom:1px solid rgba(201,162,39,0.12);display:flex;align-items:center;gap:9px'>" + "<div style='width:4px;height:30px;border-radius:2px;background:" + PALETTE[i % PALETTE.length] + "'></div>" + "<div style='flex:1'><div style='font-weight:700;font-size:13px;color:#081225'>" + f.nom + "</div></div>" + "<span style='font-size:14px;font-weight:800;color:#c9a227'>" + f.pct + "%</span></div>" + "<div style='padding:12px 14px;background:#fff;display:flex;flex-direction:column;gap:7px'>" + (ana.role ? "<div style='padding:8px 12px;background:#eff6ff;border-radius:8px;border-left:3px solid #0e2040'><div style='font-size:9px;font-weight:700;color:#1e40af;text-transform:uppercase;margin-bottom:3px'>Rôle</div><div style='font-size:12px;font-weight:600;color:#081225'>" + ana.role + "</div></div>" : "") + (ana.pourquoi ? "<div style='padding:8px 12px;background:#f8fafc;border-radius:8px'><div style='font-size:9px;font-weight:700;color:#8292a8;text-transform:uppercase;margin-bottom:3px'>Pourquoi maintenant ?</div><div style='font-size:12px;color:#081225;line-height:1.6'>" + ana.pourquoi + "</div></div>" : "") + (ana.vigilance ? "<div style='padding:8px 12px;background:#fffbeb;border-radius:8px;border-left:3px solid #c9a227'><div style='font-size:9px;font-weight:700;color:#92400e;text-transform:uppercase;margin-bottom:3px'>⚠ Vigilance</div><div style='font-size:12px;color:#78350f;line-height:1.6'>" + ana.vigilance + "</div></div>" : "") + "</div></div>";
               }).join("") : "";
-              const html = "<!DOCTYPE html><html><head><meta charset='UTF-8'><title>Allocation Manuelle — Les Associés</title>" + "<style>{box-sizing:border-box;margin:0;padding:0}body{font-family:'Segoe UI',system-ui,sans-serif;background:#f5f3ee;color:#0f2340}" + ".wrap{max-width:1200px;margin:0 auto;padding:28px}.card{background:#fff;border-radius:12px;padding:24px;margin-bottom:16px;box-shadow:0 2px 16px rgba(15,35,64,.08);border:1px solid rgba(201,162,39,.2)}" + ".hdr{background:linear-gradient(135deg,#0f2340,#1a3560);border-radius:14px;padding:26px 30px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center}" + ".logo{font-family:Georgia,serif;font-size:22px;font-weight:700;color:#c9a227}.stitle{font-size:14px;font-weight:700;color:#0f2340;margin-bottom:14px;padding-left:10px;border-left:3px solid #c9a227}" + "table{width:100%;border-collapse:collapse}th{padding:9px 8px;font-size:9px;font-weight:700;color:#8292a8;text-transform:uppercase;border-bottom:2px solid rgba(201,162,39,.2);text-align:center;background:#f8fafc}th:first-child{text-align:left;padding-left:10px}" + ".footer{text-align:center;font-size:10px;color:#8292a8;padding:16px 0 8px;border-top:1px solid rgba(201,162,39,.2);margin-top:8px}" + "@media print{body{background:#fff}.wrap{padding:0}.card{box-shadow:none;page-break-inside:avoid}}</style></head><body><div class='wrap'>" + "<div class='hdr'><div><div class='logo'>Les Associés</div><div style='font-size:10px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.4);margin-top:4px'>Allocation manuelle · Proposition de portefeuille</div></div>" + "<div style='text-align:right;color:rgba(255,255,255,.5);font-size:12px'>" + new Date().toLocaleDateString("fr-FR", {
+              const html = "<!DOCTYPE html><html><head><meta charset='UTF-8'><title>Allocation Manuelle — Les Associés</title>" + "<style>{box-sizing:border-box;margin:0;padding:0}body{font-family:'Segoe UI',system-ui,sans-serif;background:#f5f3ee;color:#081225}" + ".wrap{max-width:1200px;margin:0 auto;padding:28px}.card{background:#fff;border-radius:12px;padding:24px;margin-bottom:16px;box-shadow:0 2px 16px rgba(8,18,37,.08);border:1px solid rgba(201,162,39,.2)}" + ".hdr{background:linear-gradient(135deg,#081225,#0e2040);border-radius:14px;padding:26px 30px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center}" + ".logo{font-family:Georgia,serif;font-size:22px;font-weight:700;color:#c9a227}.stitle{font-size:14px;font-weight:700;color:#081225;margin-bottom:14px;padding-left:10px;border-left:3px solid #c9a227}" + "table{width:100%;border-collapse:collapse}th{padding:9px 8px;font-size:9px;font-weight:700;color:#8292a8;text-transform:uppercase;border-bottom:2px solid rgba(201,162,39,.2);text-align:center;background:#f8fafc}th:first-child{text-align:left;padding-left:10px}" + ".footer{text-align:center;font-size:10px;color:#8292a8;padding:16px 0 8px;border-top:1px solid rgba(201,162,39,.2);margin-top:8px}" + "@media print{body{background:#fff}.wrap{padding:0}.card{box-shadow:none;page-break-inside:avoid}}</style></head><body><div class='wrap'>" + "<div class='hdr'><div><div class='logo'>Les Associés</div><div style='font-size:10px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.4);margin-top:4px'>Allocation manuelle · Proposition de portefeuille</div></div>" + "<div style='text-align:right;color:rgba(255,255,255,.5);font-size:12px'>" + new Date().toLocaleDateString("fr-FR", {
                 day: "2-digit",
                 month: "long",
                 year: "numeric"
-              }) + "<br/><span style='background:rgba(201,162,39,.18);border:1px solid rgba(201,162,39,.35);border-radius:7px;padding:4px 12px;color:#c9a227;font-size:12px;font-weight:700;display:inline-block;margin-top:8px'>" + allocForDisplay.length + " fonds · SRI moyen " + avgSri + "</span></div></div>" + "<div class='card'><div class='stitle'>👤 Profil du portefeuille</div>" + "<div style='display:flex;gap:0;border-radius:10px;overflow:hidden'>" + "<div style='flex:1;padding:12px 16px;background:#f1f5f9;border-right:1px solid rgba(201,162,39,.15)'><div style='font-size:9px;color:#8292a8;font-weight:700;text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px'>SRI moyen</div><div style='font-size:18px;font-weight:800;color:#0f2340'>" + avgSri + "</div></div>" + "<div style='flex:1;padding:12px 16px;background:#f1f5f9;border-right:1px solid rgba(201,162,39,.15)'><div style='font-size:9px;color:#8292a8;font-weight:700;text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px'>Fonds</div><div style='font-size:18px;font-weight:800;color:#0f2340'>" + allocForDisplay.length + "</div></div>" + (manuelMontant ? "<div style='flex:1;padding:12px 16px;background:#f1f5f9'><div style='font-size:9px;color:#8292a8;font-weight:700;text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px'>Montant</div><div style='font-size:18px;font-weight:800;color:#c9a227'>" + parseFloat(manuelMontant).toLocaleString("fr-FR") + " €</div></div>" : "") + "</div></div>" + (manuelAi && manuelAi.synthese ? "<div class='card'><div class='stitle'>🧠 Synthèse IA</div><div style='padding:14px 18px;background:linear-gradient(135deg,#fff9ec,#fffef5);border-left:4px solid #c9a227;border-radius:0 10px 10px 0;font-size:13px;color:#0f2340;line-height:1.8'>" + manuelAi.synthese + "</div></div>" : "") + "<div class='card'><div class='stitle'>🍩 Répartition</div><div style='display:flex;align-items:center;gap:24px'>" + "<img src='" + donutSrc + "' style='width:160px;height:160px;flex-shrink:0'/>" + "<div style='flex:1;display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px'>" + allocForDisplay.map((f, i) => "<div style='display:flex;align-items:center;gap:8px;padding:9px;border-radius:9px;background:#f1f5f9'><div style='width:3px;height:30px;border-radius:2px;background:" + PALETTE[i % PALETTE.length] + "'></div><div style='flex:1;min-width:0'><div style='font-weight:700;font-size:11px;color:#0f2340;white-space:nowrap;overflow:hidden;text-overflow:ellipsis'>" + f.nom + "</div><div style='font-size:10px;color:#8292a8;margin-top:2px'>SRI " + f.sri + (f.marche ? " · " + f.marche : "") + "</div></div><div style='font-size:16px;font-weight:800;color:#c9a227'>" + f.pct + "%</div></div>").join("") + "</div></div></div>" + (aiBlocks ? "<div class='card'><div class='stitle'>🔍 Analyse détaillée par fonds</div><div style='display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px'>" + aiBlocks + "</div></div>" : "") + "<div class='card'><div class='stitle'>📈 Performances simulées sur 10 ans</div><div style='overflow-x:auto'><table><thead><tr><th style='text-align:left;padding-left:10px;min-width:150px'>Fonds</th><th>Risque</th><th style='color:#c9a227'>Alloc.</th>" + (manuelMontant ? "<th>Montant</th>" : "") + yrsHeader.map(y => "<th>" + y + "</th>").join("") + "<th style='color:#c9a227'>10 ans</th></tr></thead><tbody>" + perfRows + "</tbody></table></div></div>" + "<div style='background:#fffbeb;border:1px solid rgba(201,162,39,.25);border-radius:10px;padding:12px 16px;font-size:11px;color:#78350f;line-height:1.6'>⚠️ Performances simulées indicatives basées sur le profil SRI. Non contractuel.</div>" + "<div class='footer'>Les Associés · www.les-associes.fr · Document non contractuel</div></div></body></html>";
+              }) + "<br/><span style='background:rgba(201,162,39,.18);border:1px solid rgba(201,162,39,.35);border-radius:7px;padding:4px 12px;color:#c9a227;font-size:12px;font-weight:700;display:inline-block;margin-top:8px'>" + allocForDisplay.length + " fonds · SRI moyen " + avgSri + "</span></div></div>" + "<div class='card'><div class='stitle'>👤 Profil du portefeuille</div>" + "<div style='display:flex;gap:0;border-radius:10px;overflow:hidden'>" + "<div style='flex:1;padding:12px 16px;background:#f1f5f9;border-right:1px solid rgba(201,162,39,.15)'><div style='font-size:9px;color:#8292a8;font-weight:700;text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px'>SRI moyen</div><div style='font-size:18px;font-weight:800;color:#081225'>" + avgSri + "</div></div>" + "<div style='flex:1;padding:12px 16px;background:#f1f5f9;border-right:1px solid rgba(201,162,39,.15)'><div style='font-size:9px;color:#8292a8;font-weight:700;text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px'>Fonds</div><div style='font-size:18px;font-weight:800;color:#081225'>" + allocForDisplay.length + "</div></div>" + (manuelMontant ? "<div style='flex:1;padding:12px 16px;background:#f1f5f9'><div style='font-size:9px;color:#8292a8;font-weight:700;text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px'>Montant</div><div style='font-size:18px;font-weight:800;color:#c9a227'>" + parseFloat(manuelMontant).toLocaleString("fr-FR") + " €</div></div>" : "") + "</div></div>" + (manuelAi && manuelAi.synthese ? "<div class='card'><div class='stitle'>🧠 Synthèse IA</div><div style='padding:14px 18px;background:linear-gradient(135deg,#fff9ec,#fffef5);border-left:4px solid #c9a227;border-radius:0 10px 10px 0;font-size:13px;color:#081225;line-height:1.8'>" + manuelAi.synthese + "</div></div>" : "") + "<div class='card'><div class='stitle'>🍩 Répartition</div><div style='display:flex;align-items:center;gap:24px'>" + "<img src='" + donutSrc + "' style='width:160px;height:160px;flex-shrink:0'/>" + "<div style='flex:1;display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px'>" + allocForDisplay.map((f, i) => "<div style='display:flex;align-items:center;gap:8px;padding:9px;border-radius:9px;background:#f1f5f9'><div style='width:3px;height:30px;border-radius:2px;background:" + PALETTE[i % PALETTE.length] + "'></div><div style='flex:1;min-width:0'><div style='font-weight:700;font-size:11px;color:#081225;white-space:nowrap;overflow:hidden;text-overflow:ellipsis'>" + f.nom + "</div><div style='font-size:10px;color:#8292a8;margin-top:2px'>SRI " + f.sri + (f.marche ? " · " + f.marche : "") + "</div></div><div style='font-size:16px;font-weight:800;color:#c9a227'>" + f.pct + "%</div></div>").join("") + "</div></div></div>" + (aiBlocks ? "<div class='card'><div class='stitle'>🔍 Analyse détaillée par fonds</div><div style='display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px'>" + aiBlocks + "</div></div>" : "") + "<div class='card'><div class='stitle'>📈 Performances simulées sur 10 ans</div><div style='overflow-x:auto'><table><thead><tr><th style='text-align:left;padding-left:10px;min-width:150px'>Fonds</th><th>Risque</th><th style='color:#c9a227'>Alloc.</th>" + (manuelMontant ? "<th>Montant</th>" : "") + yrsHeader.map(y => "<th>" + y + "</th>").join("") + "<th style='color:#c9a227'>10 ans</th></tr></thead><tbody>" + perfRows + "</tbody></table></div></div>" + "<div style='background:#fffbeb;border:1px solid rgba(201,162,39,.25);border-radius:10px;padding:12px 16px;font-size:11px;color:#78350f;line-height:1.6'>⚠️ Performances simulées indicatives basées sur le profil SRI. Non contractuel.</div>" + "<div class='footer'>Les Associés · www.les-associes.fr · Document non contractuel</div></div></body></html>";
               openHtmlInNewTab(html);
             }
             return <div style={{
@@ -3663,7 +3663,7 @@ export default function App() {
                       l: "Fonds",
                       v: manuelFonds.length,
                       c: C.navy,
-                      bg: "rgba(15,35,64,0.07)"
+                      bg: "rgba(8,18,37,0.07)"
                     }, {
                       l: "SRI moyen",
                       v: sriMoyenManuel.toFixed(2),
@@ -3823,7 +3823,7 @@ export default function App() {
                               }} /></div></div> <Sparkline pts={perf} color={col} /> </div> </div> {isOpen && <div style={{
                         borderTop: "1px solid " + C.borderGold,
                         padding: "13px 15px",
-                        background: "rgba(15,35,64,0.02)"
+                        background: "rgba(8,18,37,0.02)"
                       }}> {f.desc && <div style={{
                           marginBottom: 9,
                           padding: "9px 12px",
@@ -4260,14 +4260,14 @@ export default function App() {
                 const legendHtml = series.map(s => `<span style='display:inline-flex;align-items:center;gap:7px;margin:3px 12px 3px 0;font-size:11px;color:#3d4f6e'><span style='display:inline-block;width:18px;height:3px;border-radius:2px;background:${s.color}'></span>${s.f.nom} <span style='background:${RISK_COLOR[s.f.sri]}22;color:${RISK_COLOR[s.f.sri]};padding:1px 7px;border-radius:8px;font-weight:700;font-size:10px'>SRI ${s.f.sri}</span></span>`).join("");
                 const podiumHtml = ranked.map((s, rank) => {
                   const tot = (s.pts[10] / s.pts[0] - 1) * 100;
-                  return `<tr style='border-bottom:1px solid #f0ece0;background:${rank === 0 ? "rgba(201,162,39,0.05)" : "#fff"}'><td style='padding:10px 14px;font-size:18px;width:44px;text-align:center'>${rank < 3 ? medals[rank] : "#" + (rank + 1)}</td><td style='padding:10px 14px'><div style='display:flex;align-items:center;gap:8px'><div style='width:10px;height:10px;border-radius:3px;background:${s.color};flex-shrink:0'></div><div><div style='font-weight:700;font-size:13px;color:#0f2340'>${s.f.nom}</div><div style='font-size:11px;color:#8292a8;margin-top:2px'>${s.f.soc || ""}${s.f.marche ? " · " + s.f.marche : ""}</div></div></div></td><td style='padding:10px;text-align:center'><span style='background:${RISK_COLOR[s.f.sri]}22;color:${RISK_COLOR[s.f.sri]};padding:3px 10px;border-radius:8px;font-weight:700;font-size:11px'>SRI ${s.f.sri}</span></td><td style='padding:10px;text-align:right'><span style='padding:4px 12px;border-radius:8px;font-weight:800;font-size:14px;background:${tot >= 0 ? "#f0fdf4" : "#fef2f2"};color:${tot >= 0 ? "#166534" : "#991b1b"}'>${(tot >= 0 ? "+" : "") + tot.toFixed(1) + "%"}</span></td></tr>`;
+                  return `<tr style='border-bottom:1px solid #f0ece0;background:${rank === 0 ? "rgba(201,162,39,0.05)" : "#fff"}'><td style='padding:10px 14px;font-size:18px;width:44px;text-align:center'>${rank < 3 ? medals[rank] : "#" + (rank + 1)}</td><td style='padding:10px 14px'><div style='display:flex;align-items:center;gap:8px'><div style='width:10px;height:10px;border-radius:3px;background:${s.color};flex-shrink:0'></div><div><div style='font-weight:700;font-size:13px;color:#081225'>${s.f.nom}</div><div style='font-size:11px;color:#8292a8;margin-top:2px'>${s.f.soc || ""}${s.f.marche ? " · " + s.f.marche : ""}</div></div></div></td><td style='padding:10px;text-align:center'><span style='background:${RISK_COLOR[s.f.sri]}22;color:${RISK_COLOR[s.f.sri]};padding:3px 10px;border-radius:8px;font-weight:700;font-size:11px'>SRI ${s.f.sri}</span></td><td style='padding:10px;text-align:right'><span style='padding:4px 12px;border-radius:8px;font-weight:800;font-size:14px;background:${tot >= 0 ? "#f0fdf4" : "#fef2f2"};color:${tot >= 0 ? "#166534" : "#991b1b"}'>${(tot >= 0 ? "+" : "") + tot.toFixed(1) + "%"}</span></td></tr>`;
                 }).join("");
                 const tableRows = series.map((s, i) => {
                   const ap = yrs.map((_, j) => (s.pts[j + 1] / s.pts[j] - 1) * 100);
                   const tot = (s.pts[10] / s.pts[0] - 1) * 100;
-                  return `<tr style='border-bottom:1px solid #f0ece0;background:${i % 2 === 0 ? "#fff" : "#f8fafc"}'><td style='padding:7px 10px'><div style='display:flex;align-items:center;gap:6px'><div style='width:8px;height:8px;border-radius:2px;background:${s.color};flex-shrink:0'></div><div style='font-weight:600;font-size:11px;color:#0f2340;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap'>${s.f.nom}</div></div></td>${ap.map(v => `<td style='padding:5px 3px;text-align:center'><span style='padding:2px 5px;border-radius:4px;font-size:10px;font-weight:700;background:${v >= 0 ? "#f0fdf4" : "#fef2f2"};color:${v >= 0 ? "#0d6e3e" : "#991b1b"}'>${(v >= 0 ? "+" : "") + v.toFixed(1) + "%"}</span></td>`).join("")}<td style='padding:5px;text-align:center'><span style='padding:2px 8px;border-radius:6px;font-weight:800;font-size:11px;background:${tot >= 0 ? "#f0fdf4" : "#fef2f2"};color:${tot >= 0 ? "#0d6e3e" : "#991b1b"}'>${(tot >= 0 ? "+" : "") + tot.toFixed(1) + "%"}</span></td></tr>`;
+                  return `<tr style='border-bottom:1px solid #f0ece0;background:${i % 2 === 0 ? "#fff" : "#f8fafc"}'><td style='padding:7px 10px'><div style='display:flex;align-items:center;gap:6px'><div style='width:8px;height:8px;border-radius:2px;background:${s.color};flex-shrink:0'></div><div style='font-weight:600;font-size:11px;color:#081225;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap'>${s.f.nom}</div></div></td>${ap.map(v => `<td style='padding:5px 3px;text-align:center'><span style='padding:2px 5px;border-radius:4px;font-size:10px;font-weight:700;background:${v >= 0 ? "#f0fdf4" : "#fef2f2"};color:${v >= 0 ? "#0d6e3e" : "#991b1b"}'>${(v >= 0 ? "+" : "") + v.toFixed(1) + "%"}</span></td>`).join("")}<td style='padding:5px;text-align:center'><span style='padding:2px 8px;border-radius:6px;font-weight:800;font-size:11px;background:${tot >= 0 ? "#f0fdf4" : "#fef2f2"};color:${tot >= 0 ? "#0d6e3e" : "#991b1b"}'>${(tot >= 0 ? "+" : "") + tot.toFixed(1) + "%"}</span></td></tr>`;
                 }).join("");
-                const html = `<!DOCTYPE html><html><head><meta charset='UTF-8'><title>Comparaison Les Associés</title><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Segoe UI',system-ui,sans-serif;background:#f5f3ee;color:#0f2340}.wrap{max-width:1080px;margin:0 auto;padding:28px}.card{background:#fff;border-radius:12px;padding:24px;margin-bottom:16px;box-shadow:0 2px 16px rgba(15,35,64,.08);border:1px solid rgba(201,162,39,.2)}.hdr{background:linear-gradient(135deg,#0f2340,#1a3560);border-radius:14px;padding:26px 30px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center}.logo{font-family:Georgia,serif;font-size:22px;font-weight:700;color:#c9a227}.logo-sub{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.4);margin-top:4px}.stitle{font-size:14px;font-weight:700;color:#0f2340;margin-bottom:14px;padding-left:10px;border-left:3px solid #c9a227}table{width:100%;border-collapse:collapse}th{padding:9px 8px;font-size:10px;font-weight:700;color:#8292a8;text-transform:uppercase;border-bottom:2px solid rgba(201,162,39,.2);text-align:center;background:#f8fafc}th:first-child{text-align:left;padding-left:12px}.footer{text-align:center;font-size:10px;color:#8292a8;padding:16px 0 8px;border-top:1px solid rgba(201,162,39,.2);margin-top:4px}.disc{background:#fff9ec;border:1px solid rgba(201,162,39,.25);border-radius:10px;padding:12px 16px;font-size:11px;color:#78350f;margin:14px 0;line-height:1.6}@media print{body{background:#fff}.wrap{padding:0}.card{box-shadow:none;page-break-inside:avoid}}</style></head><body><div class='wrap'><div class='hdr'><div><div class='logo'>Les Associés</div><div class='logo-sub'>Comparaison de fonds · Analyse de performances</div></div><div style='text-align:right;color:rgba(255,255,255,.5);font-size:12px'>${new Date().toLocaleDateString("fr-FR", {
+                const html = `<!DOCTYPE html><html><head><meta charset='UTF-8'><title>Comparaison Les Associés</title><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Segoe UI',system-ui,sans-serif;background:#f5f3ee;color:#081225}.wrap{max-width:1080px;margin:0 auto;padding:28px}.card{background:#fff;border-radius:12px;padding:24px;margin-bottom:16px;box-shadow:0 2px 16px rgba(8,18,37,.08);border:1px solid rgba(201,162,39,.2)}.hdr{background:linear-gradient(135deg,#081225,#0e2040);border-radius:14px;padding:26px 30px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center}.logo{font-family:Georgia,serif;font-size:22px;font-weight:700;color:#c9a227}.logo-sub{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.4);margin-top:4px}.stitle{font-size:14px;font-weight:700;color:#081225;margin-bottom:14px;padding-left:10px;border-left:3px solid #c9a227}table{width:100%;border-collapse:collapse}th{padding:9px 8px;font-size:10px;font-weight:700;color:#8292a8;text-transform:uppercase;border-bottom:2px solid rgba(201,162,39,.2);text-align:center;background:#f8fafc}th:first-child{text-align:left;padding-left:12px}.footer{text-align:center;font-size:10px;color:#8292a8;padding:16px 0 8px;border-top:1px solid rgba(201,162,39,.2);margin-top:4px}.disc{background:#fff9ec;border:1px solid rgba(201,162,39,.25);border-radius:10px;padding:12px 16px;font-size:11px;color:#78350f;margin:14px 0;line-height:1.6}@media print{body{background:#fff}.wrap{padding:0}.card{box-shadow:none;page-break-inside:avoid}}</style></head><body><div class='wrap'><div class='hdr'><div><div class='logo'>Les Associés</div><div class='logo-sub'>Comparaison de fonds · Analyse de performances</div></div><div style='text-align:right;color:rgba(255,255,255,.5);font-size:12px'>${new Date().toLocaleDateString("fr-FR", {
                   day: "2-digit",
                   month: "long",
                   year: "numeric"
@@ -5841,7 +5841,7 @@ export default function App() {
               }}> 🔄 Relancer la classification </button> </div>} </div>} </div>} </div> </div> {} {fondModal && <div style={{
       position: "fixed",
       inset: 0,
-      background: "rgba(15,35,64,0.65)",
+      background: "rgba(8,18,37,0.65)",
       backdropFilter: "blur(8px)",
       display: "flex",
       alignItems: "center",
@@ -5860,7 +5860,7 @@ export default function App() {
         maxWidth: 860,
         maxHeight: "90vh",
         overflowY: "auto",
-        boxShadow: "0 24px 80px rgba(15,35,64,0.3)",
+        boxShadow: "0 24px 80px rgba(8,18,37,0.3)",
         border: "1px solid " + C.borderGold
       }}> {(() => {
           const f = fondModal;
@@ -6248,7 +6248,7 @@ export default function App() {
         })()} </div> </div>} {} {showPinModal && <div style={{
       position: "fixed",
       inset: 0,
-      background: "rgba(15,35,64,0.6)",
+      background: "rgba(8,18,37,0.6)",
       backdropFilter: "blur(8px)",
       display: "flex",
       alignItems: "center",
@@ -6404,7 +6404,7 @@ export default function App() {
           }}>⌫</button> </div> </div> </div>} {} {editF && <div style={{
       position: "fixed",
       inset: 0,
-      background: "rgba(15,35,64,0.5)",
+      background: "rgba(8,18,37,0.5)",
       backdropFilter: "blur(6px)",
       display: "flex",
       alignItems: "center",
