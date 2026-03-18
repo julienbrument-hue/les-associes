@@ -2501,32 +2501,13 @@ export default function App() {
         }}> <div style={{
             display: "flex",
             alignItems: "center",
-            gap: 12
-          }}> <div> <div style={{
-                fontSize: 18,
-                fontWeight: 800,
-                color: "#c9a227",
-                letterSpacing: 1.5,
-                lineHeight: 1,
-                fontFamily: "'Inter',system-ui,sans-serif",
-                textTransform: "uppercase"
-              }}>LES</div> <div style={{
-                fontSize: 18,
-                fontWeight: 800,
-                color: "#c9a227",
-                letterSpacing: 1.5,
-                lineHeight: 1,
-                marginTop: 2,
-                fontFamily: "'Inter',system-ui,sans-serif",
-                textTransform: "uppercase"
-              }}>ASSOCIÉS</div> <div style={{
-                fontSize: 8,
-                color: "rgba(255,255,255,0.35)",
-                letterSpacing: 2,
-                marginTop: 6,
-                fontWeight: 500,
-                textTransform: "uppercase"
-              }}>Moteur d'allocation</div> </div> </div> </div> {} <nav style={{
+            justifyContent: "center"
+          }}> <img src="/logo.png" alt="Les Associés" style={{
+                width: 140,
+                height: "auto",
+                display: "block",
+                filter: "brightness(1.1)"
+              }} /> </div> </div> {} <nav style={{
           flex: 1,
           padding: "16px 10px",
           display: "flex",
