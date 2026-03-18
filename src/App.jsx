@@ -2484,7 +2484,7 @@ export default function App() {
       minHeight: "100vh",
       alignItems: "stretch"
     }}> {} <div style={{
-        width: 220,
+        width: 190,
         flexShrink: 0,
         background: "linear-gradient(160deg,#0e1f3d 0%,#132d54 100%)",
         display: "flex",
@@ -2615,7 +2615,7 @@ export default function App() {
             }}>v1.0 · Les Associés</span> </div> </div> </div> {} <div style={{
         flex: 1,
         minWidth: 0,
-        padding: "32px 36px 64px",
+        padding: "24px 28px 48px",
         overflowX: "hidden",
         background: "#ffffff"
       }}> {} {tab === "allocation" && <div className="fu"> {} <div style={{
