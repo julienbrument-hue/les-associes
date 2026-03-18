@@ -1168,7 +1168,7 @@ function MarketTicker() {
   </div>;
 }
 export default function App() {
-  const [tab, setTab] = useState("allocation");
+  const [tab, setTab] = useState("actualites");
   const [funds, setFunds] = useState([]);
   const [sri, setSri] = useState(4);
   const [duree, setDuree] = useState("5-8 ans");
@@ -1225,6 +1225,9 @@ export default function App() {
   });
   const [portfolioName, setPortfolioName] = useState("");
   const [buildingPortfolio, setBuildingPortfolio] = useState(null);
+  const [news, setNews] = useState([]);
+  const [newsLoading, setNewsLoading] = useState(true);
+  const [newsCategory, setNewsCategory] = useState("all");
   const [buildSearch, setBuildSearch] = useState("");
   const [addToPortfolioFund, setAddToPortfolioFund] = useState(null);
   const [alertThresholds, setAlertThresholds] = useState(() => {
@@ -1286,6 +1289,38 @@ export default function App() {
     const interval = setInterval(checkMarketAlerts, 5 * 60 * 1000);
     return () => clearInterval(interval);
   }, [alertThresholds, savedPortfolios]);
+  useEffect(() => {
+    async function fetchNews() {
+      setNewsLoading(true);
+      try {
+        const res = await fetch('/api/fmp?path=/stable/news/stock&limit=50');
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) {
+            setNews(data);
+            setNewsLoading(false);
+            return;
+          }
+        }
+        const res2 = await fetch('/api/fmp?path=/stable/news&limit=50');
+        if (res2.ok) {
+          const data2 = await res2.json();
+          if (Array.isArray(data2) && data2.length > 0) {
+            setNews(data2);
+            setNewsLoading(false);
+            return;
+          }
+        }
+        setNews([]);
+      } catch(e) {
+        setNews([]);
+      }
+      setNewsLoading(false);
+    }
+    fetchNews();
+    const interval = setInterval(fetchNews, 10 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
   function handleFile(e) {
     const file = e.target.files[0];
     if (!file) return;
@@ -2518,6 +2553,10 @@ export default function App() {
     setTab("allocation");
   }
   const TABS = [{
+    k: "actualites",
+    icon: "📰",
+    label: "Actualités"
+  }, {
     k: "allocation",
     icon: "⚖",
     label: "Allocation"
@@ -2663,7 +2702,120 @@ export default function App() {
         padding: "24px 28px 48px",
         overflowX: "hidden",
         background: "#ffffff"
-      }}> {} {tab === "allocation" && <div className="fu"> {} <div style={{
+      }}> {} {tab === "actualites" && <div className="fu">
+  <div style={{ marginBottom: 24 }}>
+    <h1 style={{ fontSize: 28, fontWeight: 800, color: C.navy, margin: 0, letterSpacing: -.5, fontFamily: "'Inter',system-ui,sans-serif", textTransform: "uppercase" }}>ACTUALITÉS</h1>
+    <div style={{ fontSize: 12, color: C.textDim, marginTop: 4, fontWeight: 400 }}>Actualités financières et géopolitiques en temps réel</div>
+  </div>
+
+  {/* Category filters */}
+  <div style={{ display: "flex", gap: 6, marginBottom: 20, flexWrap: "wrap" }}>
+    {[
+      { k: "all", label: "Tout", icon: "📰" },
+      { k: "forex", label: "Forex & Devises", icon: "💱" },
+      { k: "crypto", label: "Crypto", icon: "₿" },
+      { k: "commodities", label: "Matières premières", icon: "🛢️" },
+      { k: "tech", label: "Technologie", icon: "💻" },
+      { k: "finance", label: "Finance", icon: "🏦" },
+      { k: "energy", label: "Énergie", icon: "⚡" },
+    ].map(cat => {
+      const active = newsCategory === cat.k;
+      return <button key={cat.k} onClick={() => setNewsCategory(cat.k)} style={{
+        padding: "8px 16px",
+        borderRadius: 20,
+        border: "1px solid " + (active ? C.gold + "60" : C.borderGold),
+        background: active ? "linear-gradient(135deg," + C.navy + "," + C.navyL + ")" : C.bgCard,
+        color: active ? C.gold : C.textMid,
+        fontSize: 12,
+        fontWeight: active ? 700 : 500,
+        cursor: "pointer",
+        fontFamily: "inherit",
+        display: "flex",
+        alignItems: "center",
+        gap: 6,
+        transition: "all .15s"
+      }}><span style={{ fontSize: 14 }}>{cat.icon}</span>{cat.label}</button>;
+    })}
+  </div>
+
+  {/* Loading state */}
+  {newsLoading && <div style={{ ...card, padding: 40, textAlign: "center" }}>
+    <div className="spin" style={{ width: 24, height: 24, border: "3px solid " + C.borderGold, borderTopColor: C.gold, borderRadius: "50%", margin: "0 auto 12px" }} />
+    <div style={{ fontSize: 13, color: C.textDim }}>Chargement des actualités...</div>
+  </div>}
+
+  {/* No news */}
+  {!newsLoading && news.length === 0 && <div style={{ ...card, padding: 40, textAlign: "center" }}>
+    <div style={{ fontSize: 48, marginBottom: 12 }}>📭</div>
+    <div style={{ fontSize: 16, fontWeight: 700, color: C.navy }}>Aucune actualité disponible</div>
+    <div style={{ fontSize: 13, color: C.textDim, marginTop: 6 }}>Les actualités seront disponibles prochainement</div>
+  </div>}
+
+  {/* News grid */}
+  {!newsLoading && news.length > 0 && <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: 16 }}>
+    {news.filter(n => {
+      if (newsCategory === "all") return true;
+      const text = ((n.title || "") + " " + (n.text || "") + " " + (n.symbol || "")).toLowerCase();
+      if (newsCategory === "forex") return text.includes("forex") || text.includes("dollar") || text.includes("euro") || text.includes("yen") || text.includes("currency") || text.includes("fed") || text.includes("bce") || text.includes("central bank");
+      if (newsCategory === "crypto") return text.includes("crypto") || text.includes("bitcoin") || text.includes("ethereum") || text.includes("btc") || text.includes("blockchain");
+      if (newsCategory === "commodities") return text.includes("oil") || text.includes("gold") || text.includes("commodity") || text.includes("copper") || text.includes("silver") || text.includes("wheat") || text.includes("pétrole") || text.includes("or ");
+      if (newsCategory === "tech") return text.includes("tech") || text.includes("apple") || text.includes("google") || text.includes("microsoft") || text.includes("nvidia") || text.includes("ai ") || text.includes("artificial");
+      if (newsCategory === "finance") return text.includes("bank") || text.includes("finance") || text.includes("rate") || text.includes("bond") || text.includes("yield") || text.includes("earnings") || text.includes("revenue");
+      if (newsCategory === "energy") return text.includes("energy") || text.includes("solar") || text.includes("gas") || text.includes("renewable") || text.includes("nuclear") || text.includes("electric");
+      return true;
+    }).map((article, i) => {
+      const date = article.publishedDate ? new Date(article.publishedDate) : null;
+      const timeAgo = date ? (() => {
+        const diff = Date.now() - date.getTime();
+        const mins = Math.floor(diff / 60000);
+        if (mins < 60) return mins + " min";
+        const hours = Math.floor(mins / 60);
+        if (hours < 24) return hours + "h";
+        return Math.floor(hours / 24) + "j";
+      })() : "";
+
+      const title = (article.title || "").toLowerCase();
+      const bearish = title.includes("drop") || title.includes("fall") || title.includes("crash") || title.includes("decline") || title.includes("loss") || title.includes("fear") || title.includes("sell") || title.includes("down") || title.includes("bear") || title.includes("recession") || title.includes("warning") || title.includes("risk");
+      const bullish = title.includes("surge") || title.includes("rally") || title.includes("gain") || title.includes("rise") || title.includes("bull") || title.includes("record") || title.includes("growth") || title.includes("up ") || title.includes("beat") || title.includes("strong") || title.includes("boom");
+      const sentimentColor = bearish ? C.red : bullish ? C.green : C.textDim;
+      const sentimentBg = bearish ? C.redBg : bullish ? C.greenBg : C.bgSub;
+      const sentimentLabel = bearish ? "▼ Bearish" : bullish ? "▲ Bullish" : "● Neutre";
+
+      return <a key={i} href={article.url || article.link || "#"} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none", color: "inherit" }}>
+        <div style={{ ...card, padding: 0, overflow: "hidden", height: "100%", display: "flex", flexDirection: "column", cursor: "pointer", transition: "box-shadow .2s, transform .2s" }} className="hov">
+          {article.image && <div style={{ height: 180, overflow: "hidden", position: "relative" }}>
+            <img src={article.image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={e => e.currentTarget.style.display = "none"} />
+            <div style={{ position: "absolute", top: 10, left: 10, display: "flex", gap: 6 }}>
+              <span style={{ padding: "3px 10px", borderRadius: 20, background: sentimentBg, color: sentimentColor, fontSize: 10, fontWeight: 700, border: "1px solid " + sentimentColor + "30", backdropFilter: "blur(8px)" }}>{sentimentLabel}</span>
+              {timeAgo && <span style={{ padding: "3px 10px", borderRadius: 20, background: "rgba(0,0,0,0.5)", color: "#fff", fontSize: 10, fontWeight: 600, backdropFilter: "blur(8px)" }}>il y a {timeAgo}</span>}
+            </div>
+          </div>}
+
+          <div style={{ padding: "16px 18px", flex: 1, display: "flex", flexDirection: "column" }}>
+            {!article.image && <div style={{ display: "flex", gap: 6, marginBottom: 8 }}>
+              <span style={{ padding: "3px 10px", borderRadius: 20, background: sentimentBg, color: sentimentColor, fontSize: 10, fontWeight: 700, border: "1px solid " + sentimentColor + "30" }}>{sentimentLabel}</span>
+              {timeAgo && <span style={{ padding: "3px 10px", borderRadius: 20, background: C.bgSub, color: C.textDim, fontSize: 10, fontWeight: 600 }}>il y a {timeAgo}</span>}
+            </div>}
+
+            <div style={{ fontSize: 14, fontWeight: 700, color: C.navy, lineHeight: 1.4, marginBottom: 8, flex: 1 }}>{article.title}</div>
+
+            {article.text && <div style={{ fontSize: 12, color: C.textDim, lineHeight: 1.5, marginBottom: 10, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical" }}>{article.text.slice(0, 200)}</div>}
+
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "auto" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                {article.site && <span style={{ fontSize: 10, fontWeight: 600, color: C.textDim, textTransform: "uppercase", letterSpacing: .5 }}>{article.site}</span>}
+                {article.symbol && <span style={{ padding: "2px 8px", borderRadius: 6, background: C.navy + "10", color: C.navy, fontSize: 10, fontWeight: 700 }}>{article.symbol}</span>}
+              </div>
+              <span style={{ fontSize: 11, color: C.gold, fontWeight: 600 }}>Lire →</span>
+            </div>
+          </div>
+        </div>
+      </a>;
+    })}
+  </div>}
+</div>}
+
+      {tab === "allocation" && <div className="fu"> {} <div style={{
             marginBottom: 24
           }}> <h1 style={{
               fontSize: 28,
