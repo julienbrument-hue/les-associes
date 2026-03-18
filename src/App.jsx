@@ -5607,166 +5607,142 @@ const [ucsHistoData, setUcsHistoData] = useState(null);
     </div>
   </div>}
 
-  {/* Products list */}
+  {/* Products */}
   {ucsProducts.length === 0 && !ucsForm && <div style={{ ...card, padding: 40, textAlign: "center" }}>
     <div style={{ fontSize: 48, marginBottom: 12 }}>◆</div>
     <div style={{ fontSize: 16, fontWeight: 700, color: C.navy, marginBottom: 6 }}>Aucun produit UCS enregistré</div>
     <div style={{ fontSize: 13, color: C.textDim }}>Ajoutez vos produits structurés pour suivre leur valorisation</div>
   </div>}
 
-  {ucsProducts.length > 0 && !ucsSelected && <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 16 }}>
-    {ucsProducts.map(p => {
-      const isExpired = p.dateEcheance && (() => { const parts = p.dateEcheance.split("/"); if (parts.length === 3) { const d = new Date(parts[2], parts[1] - 1, parts[0]); return d < new Date(); } return false; })();
-      return <div key={p.id} style={{ ...card, padding: 0, overflow: "hidden", cursor: "pointer", transition: "box-shadow .2s" }} className="hov" onClick={() => { setUcsSelected(p); if (p.soujacentSymbol) fetchUcsHisto(p.soujacentSymbol); }}>
-        <div style={{ padding: "16px 18px", background: "linear-gradient(135deg," + C.navy + "," + C.navyL + ")", position: "relative" }}>
-          {isExpired && <span style={{ position: "absolute", top: 12, right: 12, padding: "2px 10px", borderRadius: 12, background: "rgba(239,68,68,0.2)", color: "#fca5a5", fontSize: 9, fontWeight: 700 }}>ÉCHU</span>}
-          <div style={{ fontSize: 14, fontWeight: 800, color: C.gold, marginBottom: 3 }}>{p.nom}</div>
-          <div style={{ fontSize: 10, color: "rgba(255,255,255,0.5)" }}>{p.emetteur || "—"} · {p.type || "Structuré"}</div>
-          <div style={{ display: "flex", gap: 6, marginTop: 10, flexWrap: "wrap" }}>
-            {p.sousjacent && <span style={{ padding: "3px 10px", borderRadius: 20, background: "rgba(201,162,39,0.2)", color: C.gold, fontSize: 10, fontWeight: 700 }}>{p.sousjacent}</span>}
-            {p.coupon && <span style={{ padding: "3px 10px", borderRadius: 20, background: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)", fontSize: 10, fontWeight: 600 }}>{p.coupon}</span>}
-            {p.barriere && <span style={{ padding: "3px 10px", borderRadius: 20, background: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)", fontSize: 10, fontWeight: 600 }}>Barrière: {p.barriere}</span>}
-          </div>
-        </div>
-        <div style={{ padding: "12px 18px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-          <div><div style={{ fontSize: 9, color: C.textDim, textTransform: "uppercase", letterSpacing: .6 }}>ISIN</div><div style={{ fontSize: 12, fontWeight: 600, color: C.text, marginTop: 2 }}>{p.isin || "—"}</div></div>
-          <div><div style={{ fontSize: 9, color: C.textDim, textTransform: "uppercase", letterSpacing: .6 }}>Échéance</div><div style={{ fontSize: 12, fontWeight: 600, color: C.text, marginTop: 2 }}>{p.dateEcheance || "—"}</div></div>
-          <div><div style={{ fontSize: 9, color: C.textDim, textTransform: "uppercase", letterSpacing: .6 }}>Fréquence</div><div style={{ fontSize: 12, fontWeight: 600, color: C.text, marginTop: 2 }}>{p.frequence || "—"}</div></div>
-          <div><div style={{ fontSize: 9, color: C.textDim, textTransform: "uppercase", letterSpacing: .6 }}>Nominal</div><div style={{ fontSize: 12, fontWeight: 600, color: C.text, marginTop: 2 }}>{p.valeurNominale ? parseFloat(p.valeurNominale).toLocaleString("fr-FR") + " €" : "—"}</div></div>
-        </div>
-      </div>;
-    })}
-  </div>}
+  {ucsProducts.map(p => {
+    const isExpired = p.dateEcheance && (() => { const parts = p.dateEcheance.split("/"); if (parts.length === 3) { const d = new Date(parts[2], parts[1] - 1, parts[0]); return d < new Date(); } return false; })();
+    const isOpen = ucsSelected && ucsSelected.id === p.id;
 
-  {/* Selected product detail */}
-  {ucsSelected && <div>
-    <button onClick={() => { setUcsSelected(null); setUcsHistoData(null); }} style={{ marginBottom: 16, padding: "8px 18px", borderRadius: 8, border: "1px solid " + C.borderGold, background: C.bgCard, color: C.textMid, fontSize: 12, cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 6 }}>← Retour à la liste</button>
-
-    {/* Product header */}
-    <div style={{ ...card, padding: 0, overflow: "hidden", marginBottom: 16 }}>
-      <div style={{ padding: "24px 28px", background: "linear-gradient(135deg," + C.navy + "," + C.navyL + ")" }}>
+    return <div key={p.id} style={{ ...card, padding: 0, overflow: "hidden", marginBottom: 16 }}>
+      {/* Header */}
+      <div style={{ padding: "20px 24px", background: "linear-gradient(135deg," + C.navy + "," + C.navyL + ")", position: "relative", cursor: "pointer" }} onClick={() => { if (isOpen) { setUcsSelected(null); setUcsHistoData(null); } else { setUcsSelected(p); setUcsHistoData(null); if (p.soujacentSymbol) fetchUcsHisto(p.soujacentSymbol); } }}>
+        {isExpired && <span style={{ position: "absolute", top: 14, right: 14, padding: "2px 10px", borderRadius: 12, background: "rgba(239,68,68,0.2)", color: "#fca5a5", fontSize: 9, fontWeight: 700 }}>ÉCHU</span>}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
           <div>
-            <div style={{ fontSize: 22, fontWeight: 800, color: C.gold, marginBottom: 4 }}>{ucsSelected.nom}</div>
-            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.5)" }}>{ucsSelected.emetteur || ""} · {ucsSelected.type || "Structuré"} · {ucsSelected.isin || ""}</div>
+            <div style={{ fontSize: 18, fontWeight: 800, color: C.gold, marginBottom: 3 }}>{p.nom}</div>
+            <div style={{ fontSize: 11, color: "rgba(255,255,255,0.5)" }}>{p.emetteur || "—"} · {p.type || "Structuré"}{p.isin ? " · " + p.isin : ""}</div>
           </div>
-          <div style={{ display: "flex", gap: 6 }}>
-            <button onClick={() => exportUcsPDF(ucsSelected, ucsHistoData)} style={{ padding: "8px 18px", borderRadius: 8, border: "1px solid rgba(201,162,39,0.3)", background: "rgba(201,162,39,0.15)", color: C.gold, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>↓ Export PDF</button>
-            <button onClick={() => setUcsForm(ucsSelected)} style={{ padding: "8px 14px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.15)", background: "transparent", color: "rgba(255,255,255,0.6)", fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>Modifier</button>
-            <button onClick={() => { if(confirm("Supprimer ce produit ?")) deleteUcsProduct(ucsSelected.id); }} style={{ padding: "8px 14px", borderRadius: 8, border: "1px solid rgba(239,68,68,0.3)", background: "rgba(239,68,68,0.1)", color: "#fca5a5", fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>Supprimer</button>
-          </div>
+          <span style={{ color: "rgba(255,255,255,0.4)", fontSize: 18, transform: isOpen ? "rotate(180deg)" : "rotate(0)", transition: "transform .2s" }}>▼</span>
         </div>
-        <div style={{ display: "flex", gap: 8, marginTop: 14, flexWrap: "wrap" }}>
-          {[
-            { l: "Sous-jacent", v: ucsSelected.sousjacent },
-            { l: "Coupon", v: ucsSelected.coupon },
-            { l: "Barrière", v: ucsSelected.barriere },
-            { l: "Lancement", v: ucsSelected.dateLancement },
-            { l: "Échéance", v: ucsSelected.dateEcheance },
-            { l: "Fréquence", v: ucsSelected.frequence },
-            { l: "Nominal", v: ucsSelected.valeurNominale ? parseFloat(ucsSelected.valeurNominale).toLocaleString("fr-FR") + " €" : null },
-          ].filter(x => x.v).map(x => <span key={x.l} style={{ padding: "4px 12px", borderRadius: 20, background: "rgba(201,162,39,0.15)", fontSize: 10, fontWeight: 600 }}><span style={{ color: "rgba(255,255,255,0.5)" }}>{x.l}: </span><span style={{ color: C.gold }}>{x.v}</span></span>)}
+        <div style={{ display: "flex", gap: 6, marginTop: 12, flexWrap: "wrap" }}>
+          {p.sousjacent && <span style={{ padding: "3px 10px", borderRadius: 20, background: "rgba(201,162,39,0.2)", color: C.gold, fontSize: 10, fontWeight: 700 }}>{p.sousjacent}</span>}
+          {p.coupon && <span style={{ padding: "3px 10px", borderRadius: 20, background: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)", fontSize: 10, fontWeight: 600 }}>{p.coupon}</span>}
+          {p.barriere && <span style={{ padding: "3px 10px", borderRadius: 20, background: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)", fontSize: 10, fontWeight: 600 }}>Barrière: {p.barriere}</span>}
+          {p.dateLancement && <span style={{ padding: "3px 10px", borderRadius: 20, background: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)", fontSize: 10, fontWeight: 600 }}>Lancement: {p.dateLancement}</span>}
+          {p.dateEcheance && <span style={{ padding: "3px 10px", borderRadius: 20, background: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)", fontSize: 10, fontWeight: 600 }}>Échéance: {p.dateEcheance}</span>}
+          {p.frequence && <span style={{ padding: "3px 10px", borderRadius: 20, background: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)", fontSize: 10, fontWeight: 600 }}>{p.frequence}</span>}
+          {p.valeurNominale && <span style={{ padding: "3px 10px", borderRadius: 20, background: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)", fontSize: 10, fontWeight: 600 }}>Nominal: {parseFloat(p.valeurNominale).toLocaleString("fr-FR")} €</span>}
         </div>
       </div>
-      {ucsSelected.description && <div style={{ padding: "16px 28px", background: "linear-gradient(135deg,#fff9ec,#fffef5)", borderBottom: "1px solid " + C.borderGold }}>
-        <div style={{ fontSize: 10, fontWeight: 700, color: C.textDim, textTransform: "uppercase", letterSpacing: .6, marginBottom: 6 }}>Mécanisme du produit</div>
-        <div style={{ fontSize: 13, color: C.text, lineHeight: 1.7 }}>{ucsSelected.description}</div>
+
+      {/* Description */}
+      {p.description && <div style={{ padding: "14px 24px", background: "linear-gradient(135deg,#fff9ec,#fffef5)", borderBottom: "1px solid " + C.borderGold }}>
+        <div style={{ fontSize: 10, fontWeight: 700, color: C.textDim, textTransform: "uppercase", letterSpacing: .6, marginBottom: 4 }}>Mécanisme</div>
+        <div style={{ fontSize: 12, color: C.text, lineHeight: 1.6 }}>{p.description}</div>
       </div>}
-    </div>
 
-    {/* Chart & reporting */}
-    {ucsHistoLoading && <div style={{ ...card, padding: 40, textAlign: "center" }}>
-      <div className="spin" style={{ width: 24, height: 24, border: "3px solid " + C.borderGold, borderTopColor: C.gold, borderRadius: "50%", margin: "0 auto 12px" }} />
-      <div style={{ fontSize: 13, color: C.textDim }}>Chargement des données du sous-jacent...</div>
-    </div>}
+      {/* Expanded: Reporting */}
+      {isOpen && <div style={{ padding: "20px 24px" }}>
+        {/* Loading */}
+        {ucsHistoLoading && <div style={{ textAlign: "center", padding: 30 }}>
+          <div className="spin" style={{ width: 22, height: 22, border: "3px solid " + C.borderGold, borderTopColor: C.gold, borderRadius: "50%", margin: "0 auto 10px" }} />
+          <div style={{ fontSize: 12, color: C.textDim }}>Chargement des données du sous-jacent...</div>
+        </div>}
 
-    {!ucsHistoLoading && ucsHistoData && ucsHistoData.length > 0 && (() => {
-      const pts = ucsHistoData;
-      const last = pts[pts.length - 1];
-      const first = pts[0];
-      const perf = ((last.close / first.close - 1) * 100);
-      const maxP = Math.max(...pts.map(p => p.close));
-      const minP = Math.min(...pts.map(p => p.close));
-      const W = 820, H = 260, PL = 60, PR = 16, PT = 16, PB = 32;
-      const px = (i) => PL + i / (pts.length - 1) * (W - PL - PR);
-      const py = (v) => PT + (1 - (v - minP * 0.98) / (maxP * 1.02 - minP * 0.98)) * (H - PT - PB);
-      const dPath = pts.map((p, i) => (i === 0 ? "M" : "L") + px(i) + "," + py(p.close)).join(" ");
-      const areaPath = dPath + " L" + px(pts.length - 1) + "," + (H - PB) + " L" + px(0) + "," + (H - PB) + " Z";
+        {/* Reporting data */}
+        {!ucsHistoLoading && ucsHistoData && ucsHistoData.length > 0 && (() => {
+          const pts = ucsHistoData;
+          const last = pts[pts.length - 1];
+          const first = pts[0];
+          const perf = ((last.close / first.close - 1) * 100);
+          const maxP = Math.max(...pts.map(p => p.close));
+          const minP = Math.min(...pts.map(p => p.close));
+          const W = 820, H = 220, PL = 60, PR = 16, PT = 16, PB = 32;
+          const px = (i) => PL + i / (pts.length - 1) * (W - PL - PR);
+          const py = (v) => PT + (1 - (v - minP * 0.98) / (maxP * 1.02 - minP * 0.98)) * (H - PT - PB);
+          const dPath = pts.map((p, i) => (i === 0 ? "M" : "L") + px(i) + "," + py(p.close)).join(" ");
+          const areaPath = dPath + " L" + px(pts.length - 1) + "," + (H - PB) + " L" + px(0) + "," + (H - PB) + " Z";
 
-      return <div>
-        {/* Stats */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 16 }}>
-          {[
-            { l: "Dernière VL sous-jacent", v: last.close.toFixed(2), c: C.gold },
-            { l: "Performance", v: (perf >= 0 ? "+" : "") + perf.toFixed(2) + "%", c: perf >= 0 ? C.green : C.red },
-            { l: "Plus haut", v: maxP.toFixed(2), c: C.navy },
-            { l: "Plus bas", v: minP.toFixed(2), c: C.navy },
-          ].map(s => <div key={s.l} style={{ ...card, padding: 16, textAlign: "center" }}>
-            <div style={{ fontSize: 9, fontWeight: 700, color: C.textDim, textTransform: "uppercase", letterSpacing: .6, marginBottom: 6 }}>{s.l}</div>
-            <div style={{ fontSize: 22, fontWeight: 800, color: s.c }}>{s.v}</div>
-          </div>)}
+          return <div>
+            {/* Stats row */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10, marginBottom: 16 }}>
+              {[
+                { l: "Dernière VL sous-jacent", v: last.close.toFixed(2), c: C.gold },
+                { l: "Performance", v: (perf >= 0 ? "+" : "") + perf.toFixed(2) + "%", c: perf >= 0 ? C.green : C.red },
+                { l: "Plus haut", v: maxP.toFixed(2), c: C.navy },
+                { l: "Plus bas", v: minP.toFixed(2), c: C.navy },
+              ].map(s => <div key={s.l} style={{ padding: 14, borderRadius: 10, background: C.bgSub, border: "1px solid " + C.borderGold, textAlign: "center" }}>
+                <div style={{ fontSize: 9, fontWeight: 700, color: C.textDim, textTransform: "uppercase", letterSpacing: .5, marginBottom: 4 }}>{s.l}</div>
+                <div style={{ fontSize: 20, fontWeight: 800, color: s.c }}>{s.v}</div>
+              </div>)}
+            </div>
+
+            {/* Chart */}
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: C.navy, marginBottom: 10 }}>Évolution du sous-jacent — {p.sousjacent || p.soujacentSymbol}</div>
+              <svg width="100%" viewBox={"0 0 " + W + " " + H}>
+                <defs><linearGradient id={"ucsFill" + p.id} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={C.gold} stopOpacity="0.15" /><stop offset="100%" stopColor={C.gold} stopOpacity="0.01" /></linearGradient></defs>
+                {[0, .25, .5, .75, 1].map(pct => {
+                  const y = PT + pct * (H - PT - PB);
+                  const v = maxP * 1.02 - pct * (maxP * 1.02 - minP * 0.98);
+                  return <g key={pct}><line x1={PL} y1={y} x2={W - PR} y2={y} stroke={C.borderGold} strokeWidth="1" /><text x={PL - 4} y={y + 3} textAnchor="end" fontSize="9" fill={C.textDim}>{v.toFixed(0)}</text></g>;
+                })}
+                <path d={areaPath} fill={"url(#ucsFill" + p.id + ")"} />
+                <path d={dPath} fill="none" stroke={C.gold} strokeWidth="2" strokeLinejoin="round" />
+                <circle cx={px(pts.length - 1)} cy={py(last.close)} r="4" fill={C.gold} />
+              </svg>
+            </div>
+
+            {/* History table */}
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: C.navy, marginBottom: 10 }}>Historique des valeurs</div>
+              <div style={{ overflowX: "auto", maxHeight: 300, overflowY: "auto", borderRadius: 10, border: "1px solid " + C.borderGold }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+                  <thead><tr style={{ background: C.bgSub, position: "sticky", top: 0 }}>
+                    {["Date", "Clôture", "Plus haut", "Plus bas", "Variation"].map(h => <th key={h} style={{ padding: "8px 10px", textAlign: h === "Date" ? "left" : "right", fontWeight: 700, color: C.navy, borderBottom: "2px solid " + C.borderGold, fontSize: 9, textTransform: "uppercase", letterSpacing: .5 }}>{h}</th>)}
+                  </tr></thead>
+                  <tbody>{[...pts].reverse().slice(0, 40).map((pt, i) => {
+                    const prev = pts[pts.indexOf(pt) - 1];
+                    const chg = prev ? ((pt.close / prev.close - 1) * 100) : 0;
+                    return <tr key={i} style={{ borderBottom: "1px solid " + C.border, background: i % 2 === 0 ? C.bgCard : C.bgSub }}>
+                      <td style={{ padding: "6px 10px", fontWeight: 500 }}>{pt.date}</td>
+                      <td style={{ padding: "6px 10px", textAlign: "right", fontWeight: 700, color: C.navy }}>{pt.close.toFixed(2)}</td>
+                      <td style={{ padding: "6px 10px", textAlign: "right", color: C.textDim }}>{(pt.high || pt.close).toFixed(2)}</td>
+                      <td style={{ padding: "6px 10px", textAlign: "right", color: C.textDim }}>{(pt.low || pt.close).toFixed(2)}</td>
+                      <td style={{ padding: "6px 10px", textAlign: "right" }}><span style={{ padding: "1px 6px", borderRadius: 4, background: chg >= 0 ? C.greenBg : C.redBg, color: chg >= 0 ? C.green : C.red, fontWeight: 700, fontSize: 10 }}>{(chg >= 0 ? "+" : "") + chg.toFixed(2)}%</span></td>
+                    </tr>;
+                  })}</tbody>
+                </table>
+              </div>
+            </div>
+          </div>;
+        })()}
+
+        {/* No data */}
+        {!ucsHistoLoading && !ucsHistoData && p.soujacentSymbol && <div style={{ textAlign: "center", padding: 20, color: C.textDim, fontSize: 12 }}>
+          Aucune donnée disponible pour {p.soujacentSymbol}
+          <button onClick={() => fetchUcsHisto(p.soujacentSymbol)} style={{ marginLeft: 10, padding: "5px 14px", borderRadius: 6, border: "none", background: C.navy, color: C.gold, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Réessayer</button>
+        </div>}
+
+        {!p.soujacentSymbol && <div style={{ textAlign: "center", padding: 16, color: C.textDim, fontSize: 12, background: C.bgSub, borderRadius: 10 }}>
+          Renseignez le symbole du sous-jacent pour afficher le reporting
+          <button onClick={() => setUcsForm(p)} style={{ marginLeft: 10, padding: "5px 14px", borderRadius: 6, border: "none", background: C.navy, color: C.gold, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Modifier</button>
+        </div>}
+
+        {/* Actions */}
+        <div style={{ display: "flex", gap: 8, marginTop: 16, paddingTop: 16, borderTop: "1px solid " + C.border }}>
+          <button onClick={() => exportUcsPDF(p, ucsHistoData)} style={{ padding: "10px 20px", borderRadius: 8, border: "none", background: "linear-gradient(135deg," + C.gold + "," + C.goldL + ")", color: C.navy, fontWeight: 800, fontSize: 12, cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 6 }}>↓ Export PDF</button>
+          <button onClick={() => setUcsForm(p)} style={{ padding: "10px 16px", borderRadius: 8, border: "1px solid " + C.borderGold, background: C.bgCard, color: C.textMid, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Modifier</button>
+          <button onClick={() => { if(confirm("Supprimer ce produit ?")) deleteUcsProduct(p.id); }} style={{ padding: "10px 16px", borderRadius: 8, border: "1px solid rgba(153,27,27,0.2)", background: "rgba(153,27,27,0.04)", color: C.red, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Supprimer</button>
         </div>
-
-        {/* Chart */}
-        <div style={{ ...card, padding: 20, marginBottom: 16 }}>
-          <div style={{ fontSize: 13, fontWeight: 800, color: C.navy, marginBottom: 14 }}>📈 Évolution du sous-jacent — {ucsSelected.sousjacent || ucsSelected.soujacentSymbol}</div>
-          <svg width="100%" viewBox={"0 0 " + W + " " + H}>
-            <defs>
-              <linearGradient id="ucsFill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor={C.gold} stopOpacity="0.15" />
-                <stop offset="100%" stopColor={C.gold} stopOpacity="0.01" />
-              </linearGradient>
-            </defs>
-            {[0, .25, .5, .75, 1].map(p => {
-              const y = PT + p * (H - PT - PB);
-              const v = maxP * 1.02 - p * (maxP * 1.02 - minP * 0.98);
-              return <g key={p}><line x1={PL} y1={y} x2={W - PR} y2={y} stroke={C.borderGold} strokeWidth="1" /><text x={PL - 4} y={y + 3} textAnchor="end" fontSize="9" fill={C.textDim}>{v.toFixed(0)}</text></g>;
-            })}
-            <path d={areaPath} fill="url(#ucsFill)" />
-            <path d={dPath} fill="none" stroke={C.gold} strokeWidth="2" strokeLinejoin="round" />
-            <circle cx={px(pts.length - 1)} cy={py(last.close)} r="4" fill={C.gold} />
-          </svg>
-        </div>
-
-        {/* History table */}
-        <div style={{ ...card, padding: 20 }}>
-          <div style={{ fontSize: 13, fontWeight: 800, color: C.navy, marginBottom: 14 }}>📋 Historique des valeurs liquidatives</div>
-          <div style={{ overflowX: "auto", maxHeight: 400, overflowY: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
-              <thead><tr style={{ background: C.bgSub, position: "sticky", top: 0 }}>
-                <th style={{ padding: "10px 12px", textAlign: "left", fontWeight: 700, color: C.navy, borderBottom: "2px solid " + C.borderGold, fontSize: 10, textTransform: "uppercase", letterSpacing: .6 }}>Date</th>
-                <th style={{ padding: "10px 8px", textAlign: "right", fontWeight: 700, color: C.navy, borderBottom: "2px solid " + C.borderGold, fontSize: 10, textTransform: "uppercase", letterSpacing: .6 }}>Clôture</th>
-                <th style={{ padding: "10px 8px", textAlign: "right", fontWeight: 700, color: C.navy, borderBottom: "2px solid " + C.borderGold, fontSize: 10, textTransform: "uppercase", letterSpacing: .6 }}>Plus haut</th>
-                <th style={{ padding: "10px 8px", textAlign: "right", fontWeight: 700, color: C.navy, borderBottom: "2px solid " + C.borderGold, fontSize: 10, textTransform: "uppercase", letterSpacing: .6 }}>Plus bas</th>
-                <th style={{ padding: "10px 8px", textAlign: "right", fontWeight: 700, color: C.navy, borderBottom: "2px solid " + C.borderGold, fontSize: 10, textTransform: "uppercase", letterSpacing: .6 }}>Variation</th>
-              </tr></thead>
-              <tbody>{[...pts].reverse().slice(0, 60).map((p, i) => {
-                const prev = pts[pts.indexOf(p) - 1];
-                const chg = prev ? ((p.close / prev.close - 1) * 100) : 0;
-                return <tr key={i} style={{ borderBottom: "1px solid " + C.border, background: i % 2 === 0 ? C.bgCard : C.bgSub }}>
-                  <td style={{ padding: "8px 12px", fontWeight: 500 }}>{p.date}</td>
-                  <td style={{ padding: "8px", textAlign: "right", fontWeight: 700, color: C.navy }}>{p.close.toFixed(2)}</td>
-                  <td style={{ padding: "8px", textAlign: "right", color: C.textDim }}>{(p.high || p.close).toFixed(2)}</td>
-                  <td style={{ padding: "8px", textAlign: "right", color: C.textDim }}>{(p.low || p.close).toFixed(2)}</td>
-                  <td style={{ padding: "8px", textAlign: "right" }}><span style={{ padding: "2px 8px", borderRadius: 6, background: chg >= 0 ? C.greenBg : C.redBg, color: chg >= 0 ? C.green : C.red, fontWeight: 700, fontSize: 11 }}>{(chg >= 0 ? "+" : "") + chg.toFixed(2)}%</span></td>
-                </tr>;
-              })}</tbody>
-            </table>
-          </div>
-        </div>
-      </div>;
-    })()}
-
-    {!ucsHistoLoading && !ucsHistoData && ucsSelected.soujacentSymbol && <div style={{ ...card, padding: 20, textAlign: "center" }}>
-      <div style={{ fontSize: 13, color: C.textDim, marginBottom: 10 }}>Aucune donnée historique trouvée pour {ucsSelected.soujacentSymbol}</div>
-      <button onClick={() => fetchUcsHisto(ucsSelected.soujacentSymbol)} style={{ padding: "8px 18px", borderRadius: 8, border: "none", background: "linear-gradient(135deg," + C.navy + "," + C.navyL + ")", color: C.gold, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Réessayer</button>
-    </div>}
-
-    {!ucsSelected.soujacentSymbol && <div style={{ ...card, padding: 20, textAlign: "center" }}>
-      <div style={{ fontSize: 13, color: C.textDim }}>Renseignez le symbole du sous-jacent (FMP) pour afficher le reporting</div>
-      <button onClick={() => setUcsForm(ucsSelected)} style={{ marginTop: 10, padding: "8px 18px", borderRadius: 8, border: "none", background: "linear-gradient(135deg," + C.navy + "," + C.navyL + ")", color: C.gold, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Modifier le produit</button>
-    </div>}
-  </div>}
+      </div>}
+    </div>;
+  })}
 </div>} {tab === "portefeuille" && <div className="fu"> <div style={{ marginBottom: 24 }}> <h1 style={{ fontSize: 28, fontWeight: 800, color: C.navy, margin: 0, letterSpacing: -.5, fontFamily: "'Inter',system-ui,sans-serif", textTransform: "uppercase" }}>MON PORTEFEUILLE</h1> <div style={{ fontSize: 12, color: C.textDim, marginTop: 4, fontWeight: 400 }}>Gérez vos portefeuilles favoris et alertes de marché</div> </div>
 
 {!buildingPortfolio && <div style={{ ...card, padding: 20, marginBottom: 20 }}> <div style={{ fontSize: 14, fontWeight: 800, color: C.navy, marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}> <span style={{ fontSize: 16 }}>✚</span> Créer un portefeuille manuellement </div> <div style={{ display: "flex", gap: 8 }}> <input value={portfolioName} onChange={e => setPortfolioName(e.target.value)} placeholder="Nom du nouveau portefeuille..." style={{ ...inp, flex: 1 }} onKeyDown={e => { if (e.key === "Enter" && portfolioName.trim()) createEmptyPortfolio(portfolioName); }} /> <button onClick={() => createEmptyPortfolio(portfolioName)} disabled={!portfolioName.trim()} style={{ padding: "10px 24px", borderRadius: 10, border: "none", background: portfolioName.trim() ? "linear-gradient(135deg," + C.navy + "," + C.navyL + ")" : C.bgSub, color: portfolioName.trim() ? C.gold : C.textDim, fontWeight: 800, fontSize: 13, cursor: portfolioName.trim() ? "pointer" : "default", fontFamily: "inherit", whiteSpace: "nowrap" }}>Créer</button> </div> </div>}
