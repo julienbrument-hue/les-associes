@@ -2495,6 +2495,17 @@ const [ucsHistoData, setUcsHistoData] = useState(null);
         const data = await res.json();
         if (Array.isArray(data) && data.length > 0) {
           setUcsHistoData(data.sort((a, b) => a.date.localeCompare(b.date)));
+          setUcsHistoLoading(false);
+          return;
+        }
+      }
+    } catch(e) {}
+    try {
+      const yRes = await fetch('/api/yahoo?symbol=' + encodeURIComponent(symbol));
+      if (yRes.ok) {
+        const yData = await yRes.json();
+        if (yData.history && yData.history.length > 0) {
+          setUcsHistoData(yData.history.sort((a, b) => a.date.localeCompare(b.date)));
         }
       }
     } catch(e) {}
@@ -2592,13 +2603,31 @@ const [ucsHistoData, setUcsHistoData] = useState(null);
   }
   async function fetchUcsLiveQuote(symbol) {
     if (!symbol) return null;
+    // Try FMP first
     try {
       const res = await fetch('/api/fmp?path=/stable/quote&symbol=' + encodeURIComponent(symbol));
-      if (!res.ok) return null;
-      const data = await res.json();
-      if (Array.isArray(data) && data.length > 0) return data[0];
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0 && data[0].price) return data[0];
+      }
+    } catch(e) {}
+    // Fallback: Yahoo Finance
+    try {
+      const res = await fetch('/api/yahoo?symbol=' + encodeURIComponent(symbol));
+      if (res.ok) {
+        const data = await res.json();
+        if (data.price) return { symbol: data.symbol, price: data.price, changePercentage: data.changePercentage || 0, name: data.name };
+      }
     } catch(e) {}
     return null;
+  }
+  async function searchYahooSymbol(query) {
+    if (!query || query.length < 2) return [];
+    try {
+      const res = await fetch('/api/yahoo?search=' + encodeURIComponent(query));
+      if (res.ok) return await res.json();
+    } catch(e) {}
+    return [];
   }
   async function refreshUcsQuotes() {
     const symbols = [...new Set(ucsProducts.filter(p => p.soujacentSymbol).map(p => p.soujacentSymbol))];
@@ -2644,7 +2673,7 @@ const [ucsHistoData, setUcsHistoData] = useState(null);
               contentBlock,
               {
                 type: 'text',
-                text: "Tu es un expert en produits structurés (autocall, phoenix, etc). Analyse ce document (term sheet ou brochure commerciale). ATTENTION IMPORTANTE : le soujacentSymbol doit être le symbole FMP de l'INDICE ou l'ACTION SOUS-JACENTE du produit structuré (ex: le CAC 40 si le produit est indexé sur le CAC 40), PAS le code du produit lui-même. Cherche dans le document la mention du sous-jacent (souvent indiqué comme Sous-Jacent, Indice de Référence, Underlying). Correspondances Bloomberg vers FMP : SX5E Index / Euro Stoxx 50 = ^STOXX50E, CAC Index / CAC 40 = ^FCHI, SPX Index / S&P 500 = ^GSPC, NDX Index / Nasdaq 100 = ^NDX, NKY Index / Nikkei 225 = ^N225, DAX Index / DAX = ^GDAXI, UKX Index / FTSE 100 = ^FTSE, SXXP Index / Stoxx 600 = ^STOXX. Pour une action sous-jacente : BNP FP -> BNP.PA, AAPL UQ -> AAPL, TTE FP -> TTE.PA. Cherche aussi le niveau initial/strike/cours de référence du sous-jacent et le code ISIN du produit. Réponds UNIQUEMENT en JSON strict, sans markdown :" +
+                text: "Tu es un expert en produits structurés (autocall, phoenix, etc). Analyse ce document (term sheet ou brochure commerciale). ATTENTION IMPORTANTE : le soujacentSymbol doit être le symbole FMP de l'INDICE ou l'ACTION SOUS-JACENTE du produit structuré (ex: le CAC 40 si le produit est indexé sur le CAC 40), PAS le code du produit lui-même. Cherche dans le document la mention du sous-jacent (souvent indiqué comme Sous-Jacent, Indice de Référence, Underlying). Correspondances Bloomberg vers FMP : SX5E Index / Euro Stoxx 50 = ^STOXX50E, CAC Index / CAC 40 = ^FCHI, SPX Index / S&P 500 = ^GSPC, NDX Index / Nasdaq 100 = ^NDX, NKY Index / Nikkei 225 = ^N225, DAX Index / DAX = ^GDAXI, UKX Index / FTSE 100 = ^FTSE, SXXP Index / Stoxx 600 = ^STOXX. Pour une action sous-jacente : BNP FP -> BNP.PA, AAPL UQ -> AAPL, TTE FP -> TTE.PA. Les symboles Yahoo Finance sont aussi acceptés (ex: ^FCHI, ^STOXX50E, ^GSPC). Si le sous-jacent est un indice propriétaire ou un panier, utilise l'indice principal le plus proche. Cherche aussi le niveau initial/strike/cours de référence du sous-jacent et le code ISIN du produit. Réponds UNIQUEMENT en JSON strict, sans markdown :" +
                   '{"nom":"nom complet du produit","emetteur":"émetteur ou banque","sousjacent":"nom du sous-jacent","codeBloomberg":"code Bloomberg exact trouvé dans le document","soujacentSymbol":"symbole FMP converti depuis le code Bloomberg","isin":"code ISIN si présent","type":"Autocall/Phoenix/Reverse Convertible/etc","dateLancement":"JJ/MM/AAAA","dateEcheance":"JJ/MM/AAAA","coupon":"ex: 8% par an","barriere":"ex: -40% ou 60% du niveau initial","frequence":"Trimestrielle/Semestrielle/Annuelle/etc","valeurNominale":"montant en euros","niveauInitial":"niveau initial/strike du sous-jacent (nombre)","description":"description du mécanisme en 2-3 phrases"}'
               }
             ]
@@ -5671,7 +5700,7 @@ const [ucsHistoData, setUcsHistoData] = useState(null);
           { key: "emetteur", label: "Émetteur", placeholder: "Ex: BNP Paribas, SG, Natixis..." },
           { key: "sousjacent", label: "Sous-jacent", placeholder: "Ex: CAC 40, Euro Stoxx 50..." },
           { key: "codeBloomberg", label: "Code Bloomberg", placeholder: "Ex: SX5E Index, CAC Index..." },
-          { key: "soujacentSymbol", label: "Symbole sous-jacent (FMP)", placeholder: "Auto-rempli depuis Bloomberg ou: ^FCHI, ^GSPC..." },
+          { key: "soujacentSymbol", label: "Symbole sous-jacent", placeholder: "Auto-rempli ou cherchez ci-dessous" },
           { key: "isin", label: "ISIN", placeholder: "Ex: FR0014..." },
           { key: "type", label: "Type de produit", placeholder: "Autocall, Phoenix, Reverse..." },
           { key: "dateLancement", label: "Date de lancement", placeholder: "JJ/MM/AAAA" },
