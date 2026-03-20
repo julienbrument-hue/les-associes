@@ -1128,11 +1128,11 @@ function MarketTicker() {
       try {
         const results = await Promise.allSettled(
           INDICES.map(async idx => {
-            const r = await fetch('/api/fmp?path=/stable/quote&symbol=' + encodeURIComponent(idx.symbol));
+            const r = await fetch('/api/yahoo?symbol=' + encodeURIComponent(idx.symbol));
             if (!r.ok) return null;
             const d = await r.json();
-            if (Array.isArray(d) && d.length > 0 && d[0].price) {
-              return { ...idx, price: d[0].price, change: d[0].changePercentage || 0 };
+            if (d && d.price) {
+              return { ...idx, price: d.price, change: d.changePercentage || 0 };
             }
             return null;
           })
@@ -1141,7 +1141,6 @@ function MarketTicker() {
         if (mapped.length > 0) { setIndices(mapped); setLoading(false); return; }
         throw new Error('no data');
       } catch(e) {
-        // Fallback handled above
         // Static fallback
         setIndices(INDICES.map(idx => ({ ...idx, price: null, change: (Math.random() - 0.45) * 3 })));
         setLoading(false);
@@ -1270,10 +1269,14 @@ const [ucsHistoData, setUcsHistoData] = useState(null);
     async function checkMarketAlerts() {
       try {
         const majorIndices = ['^GSPC', '^FCHI', '^GDAXI'];
-        const res = await fetch('/api/fmp?path=/stable/quote&symbol=' + encodeURIComponent(majorIndices.join(',')));
-        if (!res.ok) return;
-        const data = await res.json();
-        if (!Array.isArray(data)) return;
+        const results = await Promise.allSettled(majorIndices.map(async sym => {
+          const r = await fetch('/api/yahoo?symbol=' + encodeURIComponent(sym));
+          if (!r.ok) return null;
+          const d = await r.json();
+          return d && d.price ? { symbol: d.symbol || sym, changePercentage: d.changePercentage || 0 } : null;
+        }));
+        const data = results.map(r => r.status === 'fulfilled' ? r.value : null).filter(Boolean);
+        if (!data.length) return;
         const alerts = [];
         const names = { '^GSPC': 'S&P 500', '^FCHI': 'CAC 40', '^GDAXI': 'DAX' };
         data.forEach(q => {
