@@ -2644,8 +2644,8 @@ const [ucsHistoData, setUcsHistoData] = useState(null);
               contentBlock,
               {
                 type: 'text',
-                text: "Tu es un expert en produits structurés (autocall, phoenix, etc). Analyse ce document (term sheet ou brochure commerciale) et extrais TOUTES les informations du produit. Pour le symbole FMP du sous-jacent, utilise ces correspondances exactes : CAC 40 = ^FCHI, Euro Stoxx 50 = ^STOXX50E, S&P 500 = ^GSPC, Nasdaq 100 = ^NDX, Nikkei 225 = ^N225, DAX = ^GDAXI, FTSE 100 = ^FTSE. Pour une action individuelle, utilise le ticker (ex: AAPL, MSFT, TTE.PA pour Total). Pour un panier ou indice inconnu, laisse vide. Réponds UNIQUEMENT en JSON strict, sans markdown, sans commentaire :" +
-                  '{"nom":"nom complet du produit","emetteur":"émetteur ou banque","sousjacent":"nom du sous-jacent","soujacentSymbol":"symbole FMP exact","isin":"code ISIN si présent","type":"Autocall/Phoenix/Reverse Convertible/etc","dateLancement":"JJ/MM/AAAA","dateEcheance":"JJ/MM/AAAA","coupon":"ex: 8% par an","barriere":"ex: -40% ou 60% du niveau initial","frequence":"Trimestrielle/Semestrielle/Annuelle/etc","valeurNominale":"montant en euros","description":"description du mécanisme en 2-3 phrases"}'
+                text: "Tu es un expert en produits structurés (autocall, phoenix, etc). Analyse ce document (term sheet ou brochure commerciale) et extrais TOUTES les informations du produit. IMPORTANT : cherche le code Bloomberg du sous-jacent dans le document (souvent indiqué comme \"Code Bloomberg\", \"Bloomberg Ticker\" ou \"Mnémonique Bloomberg\"). Convertis-le en symbole FMP avec ces correspondances : SX5E Index / Euro Stoxx 50 = ^STOXX50E, CAC Index / CAC 40 = ^FCHI, SPX Index / S&P 500 = ^GSPC, NDX Index / Nasdaq 100 = ^NDX, NKY Index / Nikkei 225 = ^N225, DAX Index / DAX = ^GDAXI, UKX Index / FTSE 100 = ^FTSE, SXXP Index / Stoxx 600 = ^STOXX. Pour une action : le ticker Bloomberg sans \"Equity\" (ex: BNP FP Equity -> BNP.PA, AAPL UQ Equity -> AAPL, TTE FP Equity -> TTE.PA). Cherche aussi le niveau initial/strike du sous-jacent dans le document. Réponds UNIQUEMENT en JSON strict, sans markdown, sans commentaire :" +
+                  '{"nom":"nom complet du produit","emetteur":"émetteur ou banque","sousjacent":"nom du sous-jacent","codeBloomberg":"code Bloomberg exact trouvé dans le document","soujacentSymbol":"symbole FMP converti depuis le code Bloomberg","isin":"code ISIN si présent","type":"Autocall/Phoenix/Reverse Convertible/etc","dateLancement":"JJ/MM/AAAA","dateEcheance":"JJ/MM/AAAA","coupon":"ex: 8% par an","barriere":"ex: -40% ou 60% du niveau initial","frequence":"Trimestrielle/Semestrielle/Annuelle/etc","valeurNominale":"montant en euros","niveauInitial":"niveau initial/strike du sous-jacent (nombre)","description":"description du mécanisme en 2-3 phrases"}'
               }
             ]
           }]
@@ -5641,7 +5641,7 @@ const [ucsHistoData, setUcsHistoData] = useState(null);
 
   {/* Add / Edit form */}
   <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>
-    <button onClick={() => setUcsForm({ id: "", nom: "", emetteur: "", sousjacent: "", soujacentSymbol: "", isin: "", dateLancement: "", dateEcheance: "", coupon: "", barriere: "", frequence: "Trimestrielle", type: "Autocall", description: "", valeurNominale: "1000", niveauInitial: "", vlManuelle: "" })} style={{ padding: "10px 24px", borderRadius: 10, border: "none", background: "linear-gradient(135deg," + C.navy + "," + C.navyL + ")", color: C.gold, fontWeight: 800, fontSize: 13, cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 8 }}>✚ Nouveau produit UCS</button>
+    <button onClick={() => setUcsForm({ id: "", nom: "", emetteur: "", sousjacent: "", soujacentSymbol: "", codeBloomberg: "", isin: "", dateLancement: "", dateEcheance: "", coupon: "", barriere: "", frequence: "Trimestrielle", type: "Autocall", description: "", valeurNominale: "1000", niveauInitial: "", vlManuelle: "" })} style={{ padding: "10px 24px", borderRadius: 10, border: "none", background: "linear-gradient(135deg," + C.navy + "," + C.navyL + ")", color: C.gold, fontWeight: 800, fontSize: 13, cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 8 }}>✚ Nouveau produit UCS</button>
   </div>
 
   {/* Form modal */}
@@ -5670,7 +5670,8 @@ const [ucsHistoData, setUcsHistoData] = useState(null);
           { key: "nom", label: "Nom du produit", placeholder: "Ex: Athéna CAC 40 Mars 2025" },
           { key: "emetteur", label: "Émetteur", placeholder: "Ex: BNP Paribas, SG, Natixis..." },
           { key: "sousjacent", label: "Sous-jacent", placeholder: "Ex: CAC 40, Euro Stoxx 50..." },
-          { key: "soujacentSymbol", label: "Symbole sous-jacent (FMP)", placeholder: "Ex: ^FCHI, ^STOXX50E, AAPL..." },
+          { key: "codeBloomberg", label: "Code Bloomberg", placeholder: "Ex: SX5E Index, CAC Index..." },
+          { key: "soujacentSymbol", label: "Symbole sous-jacent (FMP)", placeholder: "Auto-rempli depuis Bloomberg ou: ^FCHI, ^GSPC..." },
           { key: "isin", label: "ISIN", placeholder: "Ex: FR0014..." },
           { key: "type", label: "Type de produit", placeholder: "Autocall, Phoenix, Reverse..." },
           { key: "dateLancement", label: "Date de lancement", placeholder: "JJ/MM/AAAA" },
