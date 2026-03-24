@@ -1496,10 +1496,8 @@ const [ucsHistoData, setUcsHistoData] = useState(null);
           // Filter by SRI range: keep funds within ±2 of target SRI
           if (Math.abs(f.sri - sri) > 2) return false;
           // Only use funds with real performance data
-          if (Object.keys(fmpCache).length > 0) {
-            var key = f.isin || f.id;
-            if (!fmpCache[key] || !fmpCache[key].isReal) return false;
-          }
+          var key = f.isin || f.id;
+          if (!fmpCache[key] || !fmpCache[key].isReal) return false;
           return true;
         });
         // If too few funds with strict SRI filter, relax to ±3
@@ -1510,10 +1508,8 @@ const [ucsHistoData, setUcsHistoData] = useState(null);
             })) return false;
             if (marches.length > 0 && f.marche && !marches.includes(f.marche)) return false;
             if (Math.abs(f.sri - sri) > 3) return false;
-            if (Object.keys(fmpCache).length > 0) {
-              var key = f.isin || f.id;
-              if (!fmpCache[key] || !fmpCache[key].isReal) return false;
-            }
+            var key = f.isin || f.id;
+            if (!fmpCache[key] || !fmpCache[key].isReal) return false;
             return true;
           });
         }
