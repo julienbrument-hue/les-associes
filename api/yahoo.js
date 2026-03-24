@@ -7,7 +7,7 @@ export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
   if (req.method === "OPTIONS") return res.status(200).end();
 
-  const { symbol, search } = req.query;
+  const { symbol, search, range } = req.query;
 
   // Search mode: find symbol by name
   if (search) {
@@ -26,7 +26,9 @@ export default async function handler(req, res) {
   if (!symbol) return res.status(400).json({ error: "Missing symbol or search parameter" });
 
   try {
-    const url = `https://query2.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=5d&interval=1d`;
+    const chartRange = range || '5d';
+    const interval = chartRange === '10y' ? '1mo' : chartRange === '1y' ? '1wk' : '1d';
+    const url = `https://query2.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=${chartRange}&interval=${interval}`;
     const r = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0" } });
     const data = await r.json();
     
