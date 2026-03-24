@@ -25,10 +25,10 @@ export default async function handler(req, res) {
   // News mode
   if (req.query.news) {
     try {
-      const queries = ["stock market", "economy finance", "forex bonds", "commodities gold oil"];
+      const queries = ["bourse marchés financiers", "économie finance taux", "CAC 40 actions Europe", "pétrole or matières premières", "géopolitique économie mondiale"];
       const allNews = [];
       for (const q of queries) {
-        const url = `https://query2.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(q)}&newsCount=15&quotesCount=0`;
+        const url = `https://query2.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(q)}&newsCount=15&quotesCount=0&lang=fr-FR&region=FR`;
         const r = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0" } });
         const data = await r.json();
         if (data.news) allNews.push(...data.news);
