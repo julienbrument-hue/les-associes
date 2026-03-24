@@ -131,7 +131,7 @@ function parseCSV(text) {
       sri: Math.min(7, Math.max(1, parseInt(g(cols.sri)) || 4)),
       isin: g(cols.isin),
       desc: g(cols.desc),
-      dispo: g(cols.dispo).split(/[|,/]/).map(function (s) {
+      dispo: g(cols.dispo).split(/[|,/;]/).map(function (s) {
         return s.trim();
       }).filter(function (s) {
         return s.length > 0;
