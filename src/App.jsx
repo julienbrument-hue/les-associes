@@ -103,7 +103,8 @@ function parseCSV(text) {
     isin: find("isin"),
     desc: find("desciptif", "descriptif", "description"),
     dispo: find("disponible", "compagnie", "eligible"),
-    marche: find("marche", "categorie")
+    marche: find("marche", "categorie"),
+    labell: find("labell", "label")
   };
   var result = [];
   for (var idx = 1; idx < lines.length; idx++) {
@@ -137,7 +138,8 @@ function parseCSV(text) {
       }).filter(function (s) {
         return s.length > 0;
       }),
-      marche: g(cols.marche)
+      marche: g(cols.marche),
+      labell: g(cols.labell)
     });
   }
   return result;
@@ -1535,6 +1537,10 @@ const [ucsHistoData, setUcsHistoData] = useState(null);
           });
         });
         eligible.sort(function (a, b) {
+          // Prioritize "SELECTION LES ASSOCIES" funds
+          var aSelect = (a.labell || "").toLowerCase().includes("selection") ? 1 : 0;
+          var bSelect = (b.labell || "").toLowerCase().includes("selection") ? 1 : 0;
+          if (bSelect !== aSelect) return bSelect - aSelect;
           if (a._sriDist !== b._sriDist) return a._sriDist - b._sriDist;
           return b._perf10 - a._perf10;
         });
