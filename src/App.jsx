@@ -1473,8 +1473,21 @@ const [ucsHistoData, setUcsHistoData] = useState(null);
             return c.toLowerCase().includes(compagnie.toLowerCase());
           })) return false;
           if (marches.length > 0 && f.marche && !marches.includes(f.marche)) return false;
+          // Filter by SRI range: keep funds within ±2 of target SRI
+          if (Math.abs(f.sri - sri) > 2) return false;
           return true;
         });
+        // If too few funds with strict SRI filter, relax to ±3
+        if (eligible.length < nTarget) {
+          eligible = funds.filter(function (f) {
+            if (compagnie && f.dispo && f.dispo.length > 0 && !f.dispo.some(function (c) {
+              return c.toLowerCase().includes(compagnie.toLowerCase());
+            })) return false;
+            if (marches.length > 0 && f.marche && !marches.includes(f.marche)) return false;
+            if (Math.abs(f.sri - sri) > 3) return false;
+            return true;
+          });
+        }
         if (!eligible.length) {
           setResults({
             alloc: [],
