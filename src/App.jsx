@@ -1326,20 +1326,22 @@ const [ucsHistoData, setUcsHistoData] = useState(null);
     async function fetchNews() {
       setNewsLoading(true);
       try {
-        const res = await fetch('/api/fmp?path=/stable/news/stock&limit=50');
+        const res = await fetch('/api/yahoo?news=1');
         if (res.ok) {
           const data = await res.json();
           if (Array.isArray(data) && data.length > 0) {
-            setNews(data);
-            setNewsLoading(false);
-            return;
-          }
-        }
-        const res2 = await fetch('/api/fmp?path=/stable/news&limit=50');
-        if (res2.ok) {
-          const data2 = await res2.json();
-          if (Array.isArray(data2) && data2.length > 0) {
-            setNews(data2);
+            const normalized = data.map(function(n) {
+              return {
+                title: n.title,
+                text: n.title,
+                url: n.link,
+                image: n.thumbnail && n.thumbnail.resolutions && n.thumbnail.resolutions[0] ? n.thumbnail.resolutions[0].url : null,
+                publishedDate: n.providerPublishTime ? new Date(n.providerPublishTime * 1000).toISOString() : null,
+                site: n.publisher,
+                symbol: n.relatedTickers ? n.relatedTickers.slice(0, 3).join(", ") : ""
+              };
+            });
+            setNews(normalized);
             setNewsLoading(false);
             return;
           }

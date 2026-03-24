@@ -22,6 +22,29 @@ export default async function handler(req, res) {
     }
   }
 
+  // News mode
+  if (req.query.news) {
+    try {
+      const queries = ["stock market", "economy finance", "forex bonds", "commodities gold oil"];
+      const allNews = [];
+      for (const q of queries) {
+        const url = `https://query2.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(q)}&newsCount=15&quotesCount=0`;
+        const r = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0" } });
+        const data = await r.json();
+        if (data.news) allNews.push(...data.news);
+      }
+      // Deduplicate by uuid
+      const seen = new Set();
+      const unique = allNews.filter(n => { if (seen.has(n.uuid)) return false; seen.add(n.uuid); return true; });
+      // Sort by date desc
+      unique.sort((a, b) => (b.providerPublishTime || 0) - (a.providerPublishTime || 0));
+      res.setHeader("Cache-Control", "s-maxage=600");
+      return res.status(200).json(unique.slice(0, 50));
+    } catch(e) {
+      return res.status(500).json({ error: e.message });
+    }
+  }
+
   // Quote mode: get price for symbol
   if (!symbol) return res.status(400).json({ error: "Missing symbol or search parameter" });
 
