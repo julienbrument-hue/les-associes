@@ -1266,12 +1266,9 @@ const [ucsHistoData, setUcsHistoData] = useState(null);
   const fileRef = useRef();
   const allCompagnies = function () {
     const s = {};
-    COMPAGNIES.forEach(function (c) {
-      s[c] = true;
-    });
     funds.forEach(function (f) {
       (f.dispo || []).forEach(function (d) {
-        if (d) s[d] = true;
+        if (d && d.trim()) s[d.trim()] = true;
       });
     });
     return Object.keys(s).sort();
