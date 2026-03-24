@@ -125,10 +125,6 @@ function parseCSV(text) {
       return ix >= 0 ? (cells[ix] || "").replace(/"/g, "").trim() : "";
     };
     // For dispo (last column), join all remaining cells in case ; was used inside
-      var dispoRaw = "";
-      if (cols.dispo >= 0) {
-        dispoRaw = cells.slice(cols.dispo).join(";");
-      }
       result.push({
       id: Math.random().toString(36).slice(2) + idx,
       nom: g(cols.nom) || "Sans nom",
@@ -136,7 +132,7 @@ function parseCSV(text) {
       sri: Math.min(7, Math.max(1, parseInt(g(cols.sri)) || 4)),
       isin: g(cols.isin),
       desc: g(cols.desc),
-      dispo: dispoRaw.replace(/"/g, "").split(/[|,/;]/).map(function (s) {
+      dispo: g(cols.dispo).split(/[|,/;]/).map(function (s) {
         return s.trim();
       }).filter(function (s) {
         return s.length > 0;
