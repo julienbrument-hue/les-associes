@@ -451,11 +451,11 @@ const FMP_BASE = "https://financialmodelingprep.com/api/v3";
 const FMP_CACHE_TTL = 24 * 60 * 60 * 1000;
 async function fetchFMPPerf(isin) {
   if (!isin) return null;
-  const cacheKey = "fmp_perf_" + isin;
+  var cacheKey = "fmp_perf_" + isin;
   try {
-    const cached = await window.localStorageGet(cacheKey);
+    var cached = await window.localStorageGet(cacheKey);
     if (cached && cached.value) {
-      const parsed = JSON.parse(cached.value);
+      var parsed = JSON.parse(cached.value);
       if (parsed.ts && Date.now() - parsed.ts < FMP_CACHE_TTL) {
         return parsed.data;
       }
@@ -463,14 +463,13 @@ async function fetchFMPPerf(isin) {
   } catch (e) {}
   var endYear = new Date().getFullYear() - 1;
   var startYear = endYear - 9;
-  // Helper to extract annual points from historical data
-  function extractPts(historical) {
+  function extractPts(history) {
     var priceByYear = {};
-    historical.forEach(function (d) {
+    history.forEach(function (d) {
       var y = parseInt(d.date.slice(0, 4));
       if (y >= startYear && y <= endYear) {
         if (!priceByYear[y] || d.date > priceByYear[y].date) {
-          priceByYear[y] = { price: d.adjClose || d.close, date: d.date };
+          priceByYear[y] = { price: d.close, date: d.date };
         }
       }
     });
@@ -485,7 +484,21 @@ async function fetchFMPPerf(isin) {
     }
     return pts;
   }
-  // Step 1: Try Yahoo Finance search by ISIN (best coverage for EU funds)
+  // Source 1: Boursorama (best for French/EU funds)
+  try {
+    var bRes = await fetch("/api/bourso?isin=" + encodeURIComponent(isin));
+    if (bRes.ok) {
+      var bData = await bRes.json();
+      if (bData.history && bData.history.length > 200) {
+        var pts = extractPts(bData.history);
+        if (pts) {
+          try { await window.localStorageSet(cacheKey, JSON.stringify({ ts: Date.now(), data: pts })); } catch(e) {}
+          return pts;
+        }
+      }
+    }
+  } catch(e) {}
+  // Source 2: Yahoo Finance search
   try {
     var ySearchRes = await fetch("/api/yahoo?search=" + encodeURIComponent(isin));
     if (ySearchRes.ok) {
@@ -506,7 +519,7 @@ async function fetchFMPPerf(isin) {
       }
     }
   } catch(e) {}
-  // Step 2: Try FMP search + historical
+  // Source 3: FMP
   try {
     var symbol = isin;
     try {
