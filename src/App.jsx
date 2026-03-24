@@ -84,7 +84,7 @@ function parseCSV(text) {
     return l.trim();
   });
   if (lines.length < 2) return [];
-  const sep = lines[0].includes("	") ? "	" : lines[0].includes(";") ? ";" : ",";
+  var tabCount = (lines[0].match(/	/g) || []).length; var semiCount = (lines[0].match(/;/g) || []).length; var commaCount = (lines[0].match(/,/g) || []).length; const sep = tabCount >= 3 ? "	" : semiCount >= 3 ? ";" : ",";
   const norm = function (s) {
     return s.toLowerCase().replace(/[éèê]/g, "e").replace(/[àâ]/g, "a").replace(/[^a-z0-9]/g, "");
   };
