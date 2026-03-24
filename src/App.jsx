@@ -1295,6 +1295,11 @@ const [ucsHistoData, setUcsHistoData] = useState(null);
       } catch (e) {}
     })();
   }, []);
+  useEffect(function () {
+    if (funds.length > 0 && Object.keys(fmpCache).length === 0 && !fmpLoading) {
+      loadFMPPerfs();
+    }
+  }, [funds.length]);
   useEffect(() => {
     if (Object.keys(alertThresholds).length === 0) return;
     async function checkMarketAlerts() {
