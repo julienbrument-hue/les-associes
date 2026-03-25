@@ -1389,9 +1389,16 @@ const [ucsHistoData, setUcsHistoData] = useState(null);
       }
       const merged = funds.slice();
       parsed.forEach(function (f) {
-        if (!merged.find(function (x) {
+        var existing = merged.find(function (x) {
           return x.isin && x.isin === f.isin;
-        })) merged.push(f);
+        });
+        if (existing) {
+          // Update labell if new import has it
+          if (f.labell) existing.labell = f.labell;
+          if (f.dispo && f.dispo.length) existing.dispo = f.dispo;
+        } else {
+          merged.push(f);
+        }
       });
       setFunds(merged);
       try {
