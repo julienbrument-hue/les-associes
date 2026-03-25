@@ -3965,33 +3965,31 @@ const [ucsHistoData, setUcsHistoData] = useState(null);
                       <div style={{ fontSize: 10, fontWeight: 700, color: C.gold, textTransform: "uppercase", letterSpacing: .8, marginBottom: 6, display: "flex", alignItems: "center", gap: 5 }}>
                         <span style={{ fontSize: 12 }}>★</span> Sélection Les Associés
                       </div>
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+                      <div style={{ border: "1px solid " + C.borderGold, borderRadius: 9, overflow: "hidden", maxHeight: 250, overflowY: "auto" }}>
                         {selFunds.map(f => {
                           const already = manuelFonds.some(mf => mf.fund.id === f.id);
-                          return <button key={f.id} onClick={() => {
+                          return <div key={f.id} onClick={() => {
                             if (already) {
                               setManuelFonds(prev => prev.filter(mf => mf.fund.id !== f.id));
                             } else {
                               setManuelFonds(prev => [...prev, { fund: f, pct: 0 }]);
                             }
                           }} style={{
-                            padding: "4px 10px",
-                            borderRadius: 16,
-                            border: "1.5px solid " + (already ? C.gold : C.borderGold),
-                            background: already ? "linear-gradient(135deg," + C.navy + "," + C.navyL + ")" : C.bgCard,
-                            color: already ? C.gold : C.textMid,
-                            fontSize: 10,
-                            fontWeight: already ? 700 : 500,
+                            padding: "9px 12px",
                             cursor: "pointer",
-                            fontFamily: "inherit",
-                            transition: "all .12s",
+                            borderBottom: "1px solid " + C.borderGold,
+                            background: already ? C.goldXL : C.bgCard,
                             display: "flex",
                             alignItems: "center",
-                            gap: 4
-                          }}>
-                            {already && <span>✓</span>}
-                            {f.nom}
-                          </button>;
+                            gap: 8,
+                            transition: "background .1s"
+                          }} onMouseEnter={e => { if (!already) e.currentTarget.style.background = C.goldXL; }} onMouseLeave={e => { if (!already) e.currentTarget.style.background = C.bgCard; }}>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontSize: 12, fontWeight: 700, color: C.navy, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.nom}</div>
+                              <div style={{ display: "flex", gap: 4, marginTop: 2 }}><SRI n={f.sri} compact />{f.marche && <Tag>{f.marche}</Tag>}</div>
+                            </div>
+                            {already ? <span style={{ fontSize: 14, color: C.green, fontWeight: 800 }}>✓</span> : <span style={{ fontSize: 18, color: C.gold }}>+</span>}
+                          </div>;
                         })}
                       </div>
                     </div>;
