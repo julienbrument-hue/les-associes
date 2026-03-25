@@ -4551,21 +4551,7 @@ const [ucsHistoData, setUcsHistoData] = useState(null);
                 fontSize: 12,
                 color: rechSelected.length >= 10 ? C.red : C.textDim,
                 fontWeight: 600
-              }}> {rechSelected.length}/10 fonds sélectionnés </div> <button onClick={() => {
-                const selFunds = funds.filter(f => (f.labell || "").toLowerCase().includes("selection"));
-                setRechSelected(selFunds.slice(0, 10));
-                setFicheFond(null);
-              }} style={{
-                fontSize: 11,
-                padding: "4px 12px",
-                borderRadius: 7,
-                border: "none",
-                background: "linear-gradient(135deg," + C.gold + "," + C.goldL + ")",
-                color: C.navy,
-                cursor: "pointer",
-                fontFamily: "inherit",
-                fontWeight: 700
-              }}> ★ Sélection Les Associés </button> {rechSelected.length > 0 && <button onClick={() => {
+              }}> {rechSelected.length}/10 fonds sélectionnés </div> {rechSelected.length > 0 && <button onClick={() => {
                 setRechSelected([]);
                 setFicheFond(null);
               }} style={{
