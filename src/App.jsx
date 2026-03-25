@@ -3957,7 +3957,7 @@ const [ucsHistoData, setUcsHistoData] = useState(null);
                   }}>Composer l'allocation</div> {} <div style={{
                     marginBottom: 12
                   }}>
-                  {/* Sélection Les Associés */}
+                  {/* Sélection Les Associés - dropdown */}
                   {(() => {
                     const selFunds = funds.filter(f => (f.labell || "").toLowerCase().includes("selection"));
                     if (!selFunds.length) return null;
@@ -3965,33 +3965,20 @@ const [ucsHistoData, setUcsHistoData] = useState(null);
                       <div style={{ fontSize: 10, fontWeight: 700, color: C.gold, textTransform: "uppercase", letterSpacing: .8, marginBottom: 6, display: "flex", alignItems: "center", gap: 5 }}>
                         <span style={{ fontSize: 12 }}>★</span> Sélection Les Associés
                       </div>
-                      <div style={{ border: "1px solid " + C.borderGold, borderRadius: 9, overflow: "hidden", maxHeight: 250, overflowY: "auto" }}>
+                      <select onChange={e => {
+                        if (!e.target.value) return;
+                        const f = selFunds.find(x => x.id === e.target.value);
+                        if (f && !manuelFonds.some(mf => mf.fund.id === f.id)) {
+                          setManuelFonds(prev => [...prev, { fund: f, pct: 0 }]);
+                        }
+                        e.target.value = "";
+                      }} style={{ ...sel, width: "100%", padding: "10px 12px", fontSize: 13, borderColor: C.gold + "50", background: C.goldXL }}>
+                        <option value="">Ajouter un fonds Sélection Les Associés...</option>
                         {selFunds.map(f => {
                           const already = manuelFonds.some(mf => mf.fund.id === f.id);
-                          return <div key={f.id} onClick={() => {
-                            if (already) {
-                              setManuelFonds(prev => prev.filter(mf => mf.fund.id !== f.id));
-                            } else {
-                              setManuelFonds(prev => [...prev, { fund: f, pct: 0 }]);
-                            }
-                          }} style={{
-                            padding: "9px 12px",
-                            cursor: "pointer",
-                            borderBottom: "1px solid " + C.borderGold,
-                            background: already ? C.goldXL : C.bgCard,
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 8,
-                            transition: "background .1s"
-                          }} onMouseEnter={e => { if (!already) e.currentTarget.style.background = C.goldXL; }} onMouseLeave={e => { if (!already) e.currentTarget.style.background = C.bgCard; }}>
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                              <div style={{ fontSize: 12, fontWeight: 700, color: C.navy, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.nom}</div>
-                              <div style={{ display: "flex", gap: 4, marginTop: 2 }}><SRI n={f.sri} compact />{f.marche && <Tag>{f.marche}</Tag>}</div>
-                            </div>
-                            {already ? <span style={{ fontSize: 14, color: C.green, fontWeight: 800 }}>✓</span> : <span style={{ fontSize: 18, color: C.gold }}>+</span>}
-                          </div>;
+                          return <option key={f.id} value={f.id} disabled={already}>{f.nom} — SRI {f.sri}{already ? " ✓" : ""}</option>;
                         })}
-                      </div>
+                      </select>
                     </div>;
                   })()}
                   </div> <div style={{
