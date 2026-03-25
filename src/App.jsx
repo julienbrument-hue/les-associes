@@ -3948,6 +3948,48 @@ const [ucsHistoData, setUcsHistoData] = useState(null);
                     textTransform: "uppercase",
                     marginBottom: 12
                   }}>Composer l'allocation</div> {} <div style={{
+                    marginBottom: 12
+                  }}>
+                  {/* Sélection Les Associés */}
+                  {(() => {
+                    const selFunds = funds.filter(f => (f.labell || "").toLowerCase().includes("selection"));
+                    if (!selFunds.length) return null;
+                    return <div style={{ marginBottom: 14 }}>
+                      <div style={{ fontSize: 10, fontWeight: 700, color: C.gold, textTransform: "uppercase", letterSpacing: .8, marginBottom: 6, display: "flex", alignItems: "center", gap: 5 }}>
+                        <span style={{ fontSize: 12 }}>★</span> Sélection Les Associés
+                      </div>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+                        {selFunds.map(f => {
+                          const already = manuelFonds.some(mf => mf.fund.id === f.id);
+                          return <button key={f.id} onClick={() => {
+                            if (already) {
+                              setManuelFonds(prev => prev.filter(mf => mf.fund.id !== f.id));
+                            } else {
+                              setManuelFonds(prev => [...prev, { fund: f, pct: 0 }]);
+                            }
+                          }} style={{
+                            padding: "4px 10px",
+                            borderRadius: 16,
+                            border: "1.5px solid " + (already ? C.gold : C.borderGold),
+                            background: already ? "linear-gradient(135deg," + C.navy + "," + C.navyL + ")" : C.bgCard,
+                            color: already ? C.gold : C.textMid,
+                            fontSize: 10,
+                            fontWeight: already ? 700 : 500,
+                            cursor: "pointer",
+                            fontFamily: "inherit",
+                            transition: "all .12s",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 4
+                          }}>
+                            {already && <span>✓</span>}
+                            {f.nom}
+                          </button>;
+                        })}
+                      </div>
+                    </div>;
+                  })()}
+                  </div> <div style={{
                     marginBottom: 14
                   }}> <div style={{
                       fontSize: 10,
