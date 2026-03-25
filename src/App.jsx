@@ -1390,7 +1390,7 @@ const [ucsHistoData, setUcsHistoData] = useState(null);
       const merged = funds.slice();
       parsed.forEach(function (f) {
         var existing = merged.find(function (x) {
-          return x.isin && x.isin === f.isin;
+          return (x.isin && f.isin && x.isin === f.isin) || (x.nom && x.nom === f.nom);
         });
         if (existing) {
           // Update labell if new import has it
