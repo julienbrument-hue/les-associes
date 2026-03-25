@@ -4592,7 +4592,44 @@ const [ucsHistoData, setUcsHistoData] = useState(null);
                 }
                 const ql = q.toLowerCase();
                 setRechResults(funds.filter(f => (f.nom || "").toLowerCase().includes(ql) || (f.isin || "").toLowerCase().includes(ql) || (f.soc || "").toLowerCase().includes(ql)).slice(0, 80));
-              }} placeholder={"🔍 Chercher parmi " + funds.length + " fonds…"} style={inp} autoComplete="off" /> <select value={rechFilterSri} onChange={e => setRechFilterSri(parseInt(e.target.value))} style={sel}><option value={0}>Tous SRI</option>{[1, 2, 3, 4, 5, 6, 7].map(r => <option key={r} value={r}>SRI {r}</option>)}</select> <select value={rechFilterMarche} onChange={e => setRechFilterMarche(e.target.value)} style={sel}><option value="">Tous marchés</option>{MARCHES_GROUPES.map(g => <optgroup key={g.groupe} label={"— " + g.groupe + " —"}>{g.items.map(m => <option key={m} value={m}>{m}</option>)}</optgroup>)}</select> </div> {} <div style={{
+              }} placeholder={"🔍 Chercher parmi " + funds.length + " fonds…"} style={inp} autoComplete="off" /> <select value={rechFilterSri} onChange={e => setRechFilterSri(parseInt(e.target.value))} style={sel}><option value={0}>Tous SRI</option>{[1, 2, 3, 4, 5, 6, 7].map(r => <option key={r} value={r}>SRI {r}</option>)}</select> <select value={rechFilterMarche} onChange={e => setRechFilterMarche(e.target.value)} style={sel}><option value="">Tous marchés</option>{MARCHES_GROUPES.map(g => <optgroup key={g.groupe} label={"— " + g.groupe + " —"}>{g.items.map(m => <option key={m} value={m}>{m}</option>)}</optgroup>)}</select> </div> {/* Sélection Les Associés */}
+          {(() => {
+            const selFunds = funds.filter(f => (f.labell || "").toLowerCase().includes("selection"));
+            if (!selFunds.length) return null;
+            return <div style={{ marginBottom: 14 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: C.gold, textTransform: "uppercase", letterSpacing: .8, marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>
+                <span style={{ fontSize: 14 }}>★</span> Sélection Les Associés
+              </div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                {selFunds.map(f => {
+                  const selected = rechSelected.some(x => x.id === f.id);
+                  return <button key={f.id} onClick={() => {
+                    if (selected) { setRechSelected(s => s.filter(x => x.id !== f.id)); }
+                    else if (rechSelected.length < 10) { setRechSelected(s => [...s, f]); }
+                  }} style={{
+                    padding: "6px 12px",
+                    borderRadius: 20,
+                    border: "1.5px solid " + (selected ? C.gold : C.borderGold),
+                    background: selected ? "linear-gradient(135deg," + C.navy + "," + C.navyL + ")" : C.bgCard,
+                    color: selected ? C.gold : C.textMid,
+                    fontSize: 11,
+                    fontWeight: selected ? 700 : 500,
+                    cursor: "pointer",
+                    fontFamily: "inherit",
+                    transition: "all .15s",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 5
+                  }}>
+                    {selected && <span>✓</span>}
+                    {f.nom}
+                    <span style={{ fontSize: 9, opacity: 0.6 }}>SRI {f.sri}</span>
+                  </button>;
+                })}
+              </div>
+            </div>;
+          })()}
+          {} <div style={{
               display: "flex",
               alignItems: "center",
               gap: 10,
