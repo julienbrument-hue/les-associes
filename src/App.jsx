@@ -4633,31 +4633,33 @@ const [ucsHistoData, setUcsHistoData] = useState(null);
               <div style={{ fontSize: 11, fontWeight: 700, color: C.gold, textTransform: "uppercase", letterSpacing: .8, marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>
                 <span style={{ fontSize: 14 }}>★</span> Sélection Les Associés
               </div>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 6 }}>
                 {selFunds.map(f => {
-                  const selected = rechSelected.some(x => x.id === f.id);
-                  return <button key={f.id} onClick={() => {
-                    if (selected) { setRechSelected(s => s.filter(x => x.id !== f.id)); }
-                    else if (rechSelected.length < 10) { setRechSelected(s => [...s, f]); }
+                  const sel2 = rechSelected.some(x => x.id === f.id);
+                  const maxed = rechSelected.length >= 10 && !sel2;
+                  const col = PALETTE[(f.sri - 1) % PALETTE.length];
+                  return <div key={f.id} onClick={() => {
+                    if (maxed) return;
+                    setRechSelected(s => sel2 ? s.filter(x => x.id !== f.id) : [...s, f]);
                   }} style={{
-                    padding: "6px 12px",
-                    borderRadius: 20,
-                    border: "1.5px solid " + (selected ? C.gold : C.borderGold),
-                    background: selected ? "linear-gradient(135deg," + C.navy + "," + C.navyL + ")" : C.bgCard,
-                    color: selected ? C.gold : C.textMid,
-                    fontSize: 11,
-                    fontWeight: selected ? 700 : 500,
-                    cursor: "pointer",
-                    fontFamily: "inherit",
+                    borderRadius: 9,
+                    border: "1.5px solid " + (sel2 ? C.gold : C.borderGold),
+                    background: sel2 ? "linear-gradient(135deg," + C.navy + "," + C.navyL + ")" : C.bgCard,
+                    padding: "9px 11px",
+                    cursor: maxed ? "not-allowed" : "pointer",
+                    opacity: maxed ? .4 : 1,
                     transition: "all .15s",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 5
-                  }}>
-                    {selected && <span>✓</span>}
-                    {f.nom}
-                    <span style={{ fontSize: 9, opacity: 0.6 }}>SRI {f.sri}</span>
-                  </button>;
+                    borderLeft: "3px solid " + (sel2 ? C.gold : col)
+                  }} onMouseEnter={e => { if (!sel2 && !maxed) e.currentTarget.style.background = C.goldXL; }} onMouseLeave={e => { if (!sel2) e.currentTarget.style.background = C.bgCard; }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+                      <div style={{ width: 18, height: 18, borderRadius: 5, background: sel2 ? C.gold : col + "22", border: "1.5px solid " + (sel2 ? C.gold : col), display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 10, fontWeight: 900, color: sel2 ? C.navy : col }}>{sel2 ? "✓" : ""}</div>
+                      <div style={{ fontWeight: 700, fontSize: 11, color: sel2 ? "#fff" : C.navy, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>{f.nom}</div>
+                    </div>
+                    <div style={{ display: "flex", gap: 4, alignItems: "center", paddingLeft: 24 }}>
+                      <SRI n={f.sri} compact />
+                      {f.marche && <span style={{ fontSize: 9, padding: "1px 5px", borderRadius: 4, background: sel2 ? "rgba(255,255,255,0.12)" : C.bgSub, color: sel2 ? "rgba(255,255,255,0.7)" : C.textDim, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 80 }}>{f.marche}</span>}
+                    </div>
+                  </div>;
                 })}
               </div>
             </div>;
